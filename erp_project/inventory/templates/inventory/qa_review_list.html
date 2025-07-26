@@ -1,0 +1,232 @@
+{% extends 'inventory/base.html' %}
+{% load static %}
+
+{% block title %}QA Reviews{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">QA Reviews</h1>
+            <p class="text-muted">Quality assurance review records</p>
+        </div>
+        <div>
+            <a href="{% url 'inventory:create_qa_review' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Create QA Review
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           value="{{ request.GET.search }}" placeholder="Review ID, Batch, Item...">
+                </div>
+                <div class="col-md-2">
+                    <label for="review_outcome" class="form-label">Outcome</label>
+                    <select class="form-select" id="review_outcome" name="review_outcome">
+                        <option value="">All Outcomes</option>
+                        <option value="Approved" {% if request.GET.review_outcome == 'Approved' %}selected{% endif %}>Approved</option>
+                        <option value="Conditional" {% if request.GET.review_outcome == 'Conditional' %}selected{% endif %}>Conditional</option>
+                        <option value="Rejected" {% if request.GET.review_outcome == 'Rejected' %}selected{% endif %}>Rejected</option>
+                        <option value="Escalated" {% if request.GET.review_outcome == 'Escalated' %}selected{% endif %}>Escalated</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="document_match" class="form-label">Document Match</label>
+                    <select class="form-select" id="document_match" name="document_match">
+                        <option value="">All</option>
+                        <option value="Yes" {% if request.GET.document_match == 'Yes' %}selected{% endif %}>Yes</option>
+                        <option value="Partial" {% if request.GET.document_match == 'Partial' %}selected{% endif %}>Partial</option>
+                        <option value="No" {% if request.GET.document_match == 'No' %}selected{% endif %}>No</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="reviewer" class="form-label">Reviewer</label>
+                    <input type="text" class="form-control" id="reviewer" name="reviewer" 
+                           value="{{ request.GET.reviewer }}" placeholder="Reviewer name">
+                </div>
+                <div class="col-md-2">
+                    <label for="date_from" class="form-label">Date From</label>
+                    <input type="date" class="form-control" id="date_from" name="date_from" 
+                           value="{{ request.GET.date_from }}">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- QA Review List -->
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">QA Review List</h5>
+                <span class="badge bg-primary">{{ qa_reviews.count }} reviews</span>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if qa_reviews %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Review ID</th>
+                                <th>Batch/Item</th>
+                                <th>Supplier</th>
+                                <th>Reviewer</th>
+                                <th>Review Date</th>
+                                <th>Outcome</th>
+                                <th>Documents</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for review in qa_reviews %}
+                            <tr>
+                                <td>
+                                    <strong><code>{{ review.qa_review_id }}</code></strong>
+                                </td>
+                                <td>
+                                    {% if review.batch_id %}
+                                        <a href="{% url 'inventory:batch_detail' review.batch_id.batch_id %}">
+                                            {{ review.batch_id.batch_id }}
+                                        </a>
+                                        <br>
+                                        <small class="text-muted">
+                                            {% if review.item_code %}
+                                                {{ review.item_code.item_name }}
+                                            {% else %}
+                                                {{ review.item_code_id }}
+                                            {% endif %}
+                                        </small>
+                                    {% else %}
+                                        <span class="text-muted">{{ review.batch_number }}</span>
+                                        <br>
+                                        <small class="text-muted">{{ review.item_code_id }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if review.supplier_code %}
+                                        <a href="{% url 'inventory:supplier_detail' review.supplier_code.supplier_id %}">
+                                            {{ review.supplier_code.supplier_name }}
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">{{ review.supplier_code_id }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ review.qa_reviewer }}</td>
+                                <td>{{ review.review_date|date:"M d, Y" }}</td>
+                                <td>
+                                    <span class="badge bg-{% if review.review_outcome == 'Approved' %}success{% elif review.review_outcome == 'Conditional' %}warning{% elif review.review_outcome == 'Rejected' %}danger{% else %}secondary{% endif %}">
+                                        {{ review.review_outcome }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        {% if review.coa_attached %}
+                                            <span class="badge bg-info" title="COA Attached">COA</span>
+                                        {% endif %}
+                                        {% if review.sds_attached %}
+                                            <span class="badge bg-info" title="SDS Attached">SDS</span>
+                                        {% endif %}
+                                        {% if review.spec_attached %}
+                                            <span class="badge bg-info" title="Spec Attached">Spec</span>
+                                        {% endif %}
+                                        {% if review.label_attached %}
+                                            <span class="badge bg-info" title="Label Attached">Label</span>
+                                        {% endif %}
+                                    </div>
+                                    <br>
+                                    <small class="text-muted">
+                                        Match: 
+                                        <span class="text-{% if review.document_match == 'Yes' %}success{% elif review.document_match == 'Partial' %}warning{% else %}danger{% endif %}">
+                                            {{ review.document_match }}
+                                        </span>
+                                    </small>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'inventory:qa_review_detail' review.qa_review_id %}" 
+                                           class="btn btn-sm btn-outline-primary" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if review.batch_id %}
+                                        <a href="{% url 'inventory:batch_detail' review.batch_id.batch_id %}" 
+                                           class="btn btn-sm btn-outline-success" title="View Batch">
+                                            <i class="fas fa-box"></i>
+                                        </a>
+                                        {% endif %}
+                                        {% if review.inventory_transaction_id %}
+                                        <a href="{% url 'inventory:transaction_detail' review.inventory_transaction_id.transaction_id %}" 
+                                           class="btn btn-sm btn-outline-warning" title="View Transaction">
+                                            <i class="fas fa-exchange-alt"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if qa_reviews.has_other_pages %}
+                    <nav aria-label="QA Review pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if qa_reviews.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ qa_reviews.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        Previous
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            {% for num in qa_reviews.paginator.page_range %}
+                                {% if qa_reviews.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > qa_reviews.number|add:'-3' and num < qa_reviews.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                            {{ num }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if qa_reviews.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ qa_reviews.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        Next
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-check fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No QA reviews found</h5>
+                    <p class="text-muted">Try adjusting your search criteria or create a new QA review.</p>
+                    <a href="{% url 'inventory:create_qa_review' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create First QA Review
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

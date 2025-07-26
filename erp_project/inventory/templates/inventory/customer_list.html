@@ -1,0 +1,214 @@
+{% extends 'inventory/base.html' %}
+{% load static %}
+
+{% block title %}Customers{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Customers</h1>
+            <p class="text-muted">Manage customer and recipient information</p>
+        </div>
+        <div>
+            <a href="#" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Customer
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           value="{{ request.GET.search }}" placeholder="Customer name, code...">
+                </div>
+                <div class="col-md-2">
+                    <label for="customer_type" class="form-label">Type</label>
+                    <select class="form-select" id="customer_type" name="customer_type">
+                        <option value="">All Types</option>
+                        <option value="Research" {% if request.GET.customer_type == 'Research' %}selected{% endif %}>Research</option>
+                        <option value="Clinical" {% if request.GET.customer_type == 'Clinical' %}selected{% endif %}>Clinical</option>
+                        <option value="Commercial" {% if request.GET.customer_type == 'Commercial' %}selected{% endif %}>Commercial</option>
+                        <option value="CM" {% if request.GET.customer_type == 'CM' %}selected{% endif %}>CM</option>
+                        <option value="Internal" {% if request.GET.customer_type == 'Internal' %}selected{% endif %}>Internal</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="approved" class="form-label">Approval Status</label>
+                    <select class="form-select" id="approved" name="approved">
+                        <option value="">All</option>
+                        <option value="True" {% if request.GET.approved == 'True' %}selected{% endif %}>Approved</option>
+                        <option value="False" {% if request.GET.approved == 'False' %}selected{% endif %}>Not Approved</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="country" class="form-label">Country</label>
+                    <input type="text" class="form-control" id="country" name="country" 
+                           value="{{ request.GET.country }}" placeholder="Country">
+                </div>
+                <div class="col-md-2">
+                    <label for="qa_required" class="form-label">QA Required</label>
+                    <select class="form-select" id="qa_required" name="qa_required">
+                        <option value="">All</option>
+                        <option value="True" {% if request.GET.qa_required == 'True' %}selected{% endif %}>Yes</option>
+                        <option value="False" {% if request.GET.qa_required == 'False' %}selected{% endif %}>No</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Customer List -->
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Customer List</h5>
+                <span class="badge bg-primary">{{ customers.count }} customers</span>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if customers %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Customer Code</th>
+                                <th>Customer Name</th>
+                                <th>Type</th>
+                                <th>Contact</th>
+                                <th>Location</th>
+                                <th>Status</th>
+                                <th>QA Required</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer in customers %}
+                            <tr>
+                                <td>
+                                    <strong><code>{{ customer.customer_code }}</code></strong>
+                                </td>
+                                <td>
+                                    <a href="{% url 'inventory:customer_detail' customer.customer_code %}">
+                                        {{ customer.customer_name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if customer.customer_type == 'Research' %}info{% elif customer.customer_type == 'Clinical' %}primary{% elif customer.customer_type == 'Commercial' %}success{% elif customer.customer_type == 'CM' %}warning{% else %}secondary{% endif %}">
+                                        {{ customer.customer_type }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if customer.contact_person %}
+                                        {{ customer.contact_person }}
+                                        {% if customer.phone %}
+                                            <br><small class="text-muted">{{ customer.phone }}</small>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">No contact</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ customer.city }}, {{ customer.state }}
+                                    <br>
+                                    <small class="text-muted">{{ customer.country }}</small>
+                                </td>
+                                <td>
+                                    {% if customer.approved %}
+                                        <span class="badge bg-success">Approved</span>
+                                        {% if customer.approved_on %}
+                                            <br><small class="text-muted">{{ customer.approved_on|date:"M d, Y" }}</small>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if customer.qa_required_before_ship %}
+                                        <span class="badge bg-danger">Required</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Not Required</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'inventory:customer_detail' customer.customer_code %}" 
+                                           class="btn btn-sm btn-outline-primary" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="#" class="btn btn-sm btn-outline-success" title="Edit Customer">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'inventory:transaction_list' %}?recipient_code={{ customer.customer_code }}" 
+                                           class="btn btn-sm btn-outline-warning" title="View Transactions">
+                                            <i class="fas fa-exchange-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if customers.has_other_pages %}
+                    <nav aria-label="Customer pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if customers.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ customers.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        Previous
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            {% for num in customers.paginator.page_range %}
+                                {% if customers.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > customers.number|add:'-3' and num < customers.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                            {{ num }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if customers.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ customers.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        Next
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No customers found</h5>
+                    <p class="text-muted">Try adjusting your search criteria or add a new customer.</p>
+                    <a href="#" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add First Customer
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,330 @@
+{% extends 'inventory/base.html' %}
+{% load static %}
+
+{% block title %}Customer Detail - {{ customer.customer_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Customer Details</h1>
+            <p class="text-muted">{{ customer.customer_name }}</p>
+        </div>
+        <div>
+            <a href="{% url 'inventory:customer_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Customers
+            </a>
+            <a href="#" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit Customer
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Customer Information -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-user"></i> Customer Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Customer Code:</strong></td>
+                                    <td><code>{{ customer.customer_code }}</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Customer Name:</strong></td>
+                                    <td>{{ customer.customer_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Customer Type:</strong></td>
+                                    <td>
+                                        <span class="badge bg-{% if customer.customer_type == 'Research' %}info{% elif customer.customer_type == 'Clinical' %}primary{% elif customer.customer_type == 'Commercial' %}success{% elif customer.customer_type == 'CM' %}warning{% else %}secondary{% endif %}">
+                                            {{ customer.customer_type }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Contact Person:</strong></td>
+                                    <td>{{ customer.contact_person|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Phone:</strong></td>
+                                    <td>{{ customer.phone|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Email:</strong></td>
+                                    <td>
+                                        {% if customer.email %}
+                                            <a href="mailto:{{ customer.email }}">{{ customer.email }}</a>
+                                        {% else %}
+                                            <span class="text-muted">Not specified</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Address Line 1:</strong></td>
+                                    <td>{{ customer.address_line1|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Address Line 2:</strong></td>
+                                    <td>{{ customer.address_line2|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>City:</strong></td>
+                                    <td>{{ customer.city|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>State:</strong></td>
+                                    <td>{{ customer.state|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Postal Code:</strong></td>
+                                    <td>{{ customer.postal_code|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Country:</strong></td>
+                                    <td>{{ customer.country|default:"Not specified" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Approval and QA Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clipboard-check"></i> Approval & QA Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Approval Status:</strong></td>
+                                    <td>
+                                        {% if customer.approved %}
+                                            <span class="badge bg-success">Approved</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Not Approved</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Approved On:</strong></td>
+                                    <td>
+                                        {% if customer.approved_on %}
+                                            {{ customer.approved_on|date:"M d, Y" }}
+                                        {% else %}
+                                            <span class="text-muted">Not approved yet</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>QA Required Before Ship:</strong></td>
+                                    <td>
+                                        {% if customer.qa_required_before_ship %}
+                                            <span class="badge bg-danger">Required</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Not Required</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>GSTIN:</strong></td>
+                                    <td>{{ customer.gstin|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Preferred Courier:</strong></td>
+                                    <td>{{ customer.preferred_courier|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Remarks:</strong></td>
+                                    <td>{{ customer.remarks|default:"No remarks" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'inventory:create_transaction' %}?recipient_code={{ customer.customer_code }}" class="btn btn-outline-primary">
+                            <i class="fas fa-exchange-alt"></i> Create Shipment
+                        </a>
+                        <a href="{% url 'inventory:transaction_list' %}?recipient_code={{ customer.customer_code }}" class="btn btn-outline-success">
+                            <i class="fas fa-history"></i> View Transactions
+                        </a>
+                        <button class="btn btn-outline-warning">
+                            <i class="fas fa-print"></i> Print Details
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Statistics -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar"></i> Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary">{{ customer.inventorytransactions.count }}</h4>
+                            <small class="text-muted">Transactions</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success">{{ customer.inventorytransactions.filter.transaction_type='SHIP-CUS'|length }}</h4>
+                            <small class="text-muted">Shipments</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-address-card"></i> Contact Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        {% if customer.contact_person %}
+                        <li class="mb-2">
+                            <strong>Contact:</strong><br>
+                            {{ customer.contact_person }}
+                        </li>
+                        {% endif %}
+                        {% if customer.phone %}
+                        <li class="mb-2">
+                            <strong>Phone:</strong><br>
+                            <a href="tel:{{ customer.phone }}">{{ customer.phone }}</a>
+                        </li>
+                        {% endif %}
+                        {% if customer.email %}
+                        <li class="mb-2">
+                            <strong>Email:</strong><br>
+                            <a href="mailto:{{ customer.email }}">{{ customer.email }}</a>
+                        </li>
+                        {% endif %}
+                        <li class="mb-2">
+                            <strong>Address:</strong><br>
+                            {{ customer.address_line1 }}<br>
+                            {% if customer.address_line2 %}{{ customer.address_line2 }}<br>{% endif %}
+                            {{ customer.city }}, {{ customer.state }} {{ customer.postal_code }}<br>
+                            {{ customer.country }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history"></i> Recent Transactions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if customer.inventorytransactions.all %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Transaction ID</th>
+                                        <th>Type</th>
+                                        <th>Date</th>
+                                        <th>Item</th>
+                                        <th>Quantity</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transaction in customer.inventorytransactions.all|slice:":10" %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'inventory:transaction_detail' transaction.transaction_id %}">
+                                                {{ transaction.transaction_id }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if transaction.transaction_type == 'SHIP-CUS' %}danger{% else %}secondary{% endif %}">
+                                                {{ transaction.transaction_type }}
+                                            </span>
+                                        </td>
+                                        <td>{{ transaction.transaction_datetime|date:"M d, Y H:i" }}</td>
+                                        <td>
+                                            {% if transaction.item_code %}
+                                                <a href="{% url 'inventory:item_detail' transaction.item_code.item_record_id %}">
+                                                    {{ transaction.item_code.item_name }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">{{ transaction.product_name }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ transaction.quantity }} {{ transaction.unit }}</td>
+                                        <td>
+                                            {% if transaction.qa_status %}
+                                                <span class="badge bg-{% if transaction.qa_status == 'Approved' %}success{% elif transaction.qa_status == 'Pending' %}warning{% else %}danger{% endif %}">
+                                                    {{ transaction.qa_status }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if customer.inventorytransactions.count > 10 %}
+                            <div class="text-center mt-3">
+                                <a href="{% url 'inventory:transaction_list' %}?recipient_code={{ customer.customer_code }}" class="btn btn-outline-primary">
+                                    View All Transactions
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted mb-0">No transactions found for this customer.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

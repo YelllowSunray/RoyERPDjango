@@ -1,0 +1,208 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Suppliers{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-truck text-primary"></i>
+                    Suppliers
+                </h1>
+                <a href="#" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Supplier
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Form -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   value="{{ search_query }}" placeholder="Search by ID, name, or business unit">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="approved" class="form-label">Approval Status</label>
+                            <select class="form-select" id="approved" name="approved">
+                                <option value="">All</option>
+                                <option value="true" {% if approved_filter == 'true' %}selected{% endif %}>Approved</option>
+                                <option value="false" {% if approved_filter == 'false' %}selected{% endif %}>Pending</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="country" class="form-label">Country</label>
+                            <select class="form-select" id="country" name="country">
+                                <option value="">All</option>
+                                <option value="IN" {% if country_filter == 'IN' %}selected{% endif %}>India</option>
+                                <option value="US" {% if country_filter == 'US' %}selected{% endif %}>United States</option>
+                                <option value="CN" {% if country_filter == 'CN' %}selected{% endif %}>China</option>
+                                <option value="DE" {% if country_filter == 'DE' %}selected{% endif %}>Germany</option>
+                                <option value="JP" {% if country_filter == 'JP' %}selected{% endif %}>Japan</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                                <a href="{% url 'inventory:supplier_list' %}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Clear
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suppliers Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list text-info"></i>
+                        Supplier List ({{ page_obj.paginator.count }} total)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if page_obj %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Supplier ID</th>
+                                        <th>Name</th>
+                                        <th>Business Unit</th>
+                                        <th>Country</th>
+                                        <th>Approval Status</th>
+                                        <th>Last Reviewed</th>
+                                        <th>Review Frequency</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for supplier in page_obj %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'inventory:supplier_detail' supplier.supplier_id %}" class="text-decoration-none">
+                                                <strong>{{ supplier.supplier_id }}</strong>
+                                            </a>
+                                        </td>
+                                        <td>{{ supplier.supplier_name }}</td>
+                                        <td>{{ supplier.business_unit|default:"-" }}</td>
+                                        <td>{{ supplier.country_of_origin }}</td>
+                                        <td>
+                                            {% if supplier.approved %}
+                                                <span class="badge bg-success">Approved</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if supplier.last_reviewed_on %}
+                                                {{ supplier.last_reviewed_on }}
+                                            {% else %}
+                                                <span class="text-muted">Never</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ supplier.review_frequency }}</td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'inventory:supplier_detail' supplier.supplier_id %}" 
+                                                   class="btn btn-sm btn-outline-primary" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="#" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="#" class="btn btn-sm btn-outline-info" title="Products">
+                                                    <i class="fas fa-boxes"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if page_obj.has_other_pages %}
+                        <nav aria-label="Supplier pagination" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if approved_filter %}&approved={{ approved_filter }}{% endif %}{% if country_filter %}&country={{ country_filter }}{% endif %}">
+                                            <i class="fas fa-angle-double-left"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if approved_filter %}&approved={{ approved_filter }}{% endif %}{% if country_filter %}&country={{ country_filter }}{% endif %}">
+                                            <i class="fas fa-angle-left"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if approved_filter %}&approved={{ approved_filter }}{% endif %}{% if country_filter %}&country={{ country_filter }}{% endif %}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if approved_filter %}&approved={{ approved_filter }}{% endif %}{% if country_filter %}&country={{ country_filter }}{% endif %}">
+                                            <i class="fas fa-angle-right"></i>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if approved_filter %}&approved={{ approved_filter }}{% endif %}{% if country_filter %}&country={{ country_filter }}{% endif %}">
+                                            <i class="fas fa-angle-double-right"></i>
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+
+                        <!-- Page Info -->
+                        <div class="text-center text-muted mt-3">
+                            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} suppliers
+                        </div>
+
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-truck fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No suppliers found</h5>
+                            <p class="text-muted">
+                                {% if search_query or approved_filter or country_filter %}
+                                    Try adjusting your search criteria.
+                                {% else %}
+                                    No suppliers have been added yet.
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

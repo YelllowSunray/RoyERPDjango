@@ -1,0 +1,319 @@
+﻿Pluviago ERP Document A2.1 – Master Product Data Structures
+Version 1.6 | July 2025 (Traceability-Integrated Update + QA Separation)
+
+🌟 Purpose
+To define a clear, normalized data structure across suppliers, products, items, batches, and storage. This version integrates derived logic for traceability and QA enforcement using the central Traceability Glossary and removes QA verification tracking from Item Records.
+
+🧱 Master Data Table Relationships
+Supplier → Product → Product Version → Item Record → Batch → Storage → Location
+                                ↘        ↘
+                                 Supplier-Product → QA Review Table
+· Item Records contain derived fields that control traceability logic and QA triggers.
+· Supplier-Product table manages batch code quality and vendor-specific formats.
+· QA Review Table tracks actual verification activity per document.
+
+🔹 Section A: Master Schema Tables
+
+📂 Item Records Table (Key Fields)
+FieldDescriptionExampleOwnerComment / Linkage / PurposeItem Record IDUnique internal ID formatted as [CAT]-[SUB]-[CODE]CHE-SOL-ETH-001ERP ArchitectPrimary key; structured ID pattern aligns category and subtype for classificationItem NameStandardized name aligned with label and QA docsEthanol 99.9%QAUsed for label printing, QA checks, and user displayUnit of Measure (UOM)Standard unit of measurementLInventoryEnum: kg, g, L, bottle, etc.CategoryInventory groupingChemicalERP ArchitectEnum: Biological, Chemical, Packaging, etc.SubtypeFunctional role within the category (new unified field)SolventQAReplaces Usage Type + Hazard Category; Enum based on CategoryGradePurity or spec levelUSPQAEnum: FCC, USP, ACS, Technical, etc.; affects QA and spec requirementsHazard ClassRegulatory hazard from SDSFlammableQAEnum; triggers SDS requirement and storage rulesChemical FamilySubgroup within hazard categoryAlcoholsQAEnables compatibility rules, segregation logicContamination RiskRisk level for QA and traceabilityMediumQAEnum: Low / Medium / HighCritical to Product?Flag for QA and traceability enforcementYesQABoolean; high criticality enforces full traceability and document requirementsQA Required?System-derived from grade, subtype, contamination, criticalityYesSystem LogicDrives COA, QA flow, and traceability levelTraceability LevelDerived traceability scopeBatch-levelSystem LogicEnum: None / Basic / Batch-level / Full; logic-basedSDS Mandatory?Safety Data Sheet required?YesSystem LogicDerived from Hazard ClassCOA Mandatory?Certificate of Analysis required?YesSystem LogicDerived from QA Required and TraceabilitySpec Required?Specification document required?YesSystem LogicDerived from QA logic
+
+
+📦 Supplier Master Table
+FieldDescriptionExampleOwnerComment / Linkage / PurposeSupplier IDUnique identifier for the supplierSUP-ALGAMOERP ArchitectUsed for FK in Supplier-Product tableSupplier NameFull legal name of the supplierAlgamo S.R.O.ProcurementDisplayed on procurement and QA screensBusiness UnitIf internal supplier, name of internal entityPluviago BiotechERP ArchitectHelps distinguish internal vs external vendorsAddressAddress and contact detailsCzech RepublicProcurementRequired for traceability and auditsCountry of OriginCountry where goods are producedCZProcurementDrives customs, certificates, and QA needsCertificationsEnum list of active certifications, GMP, ISO, HACCP or relevant QA approvalsGMP, ISO-9001QADrives approval rulesApproved?QA Approval statusYesQAManual flag; must be set before active useApproved OnDate of approval2024-01-05QAUsed to track review cyclesLast Reviewed OnDate QA last reviewed this supplier2024-07-01QATime-stamp for audit trailReview Frequency6 months / 1 year / On change1 yearQAEnum-based cadence for revalidationNotesOptional comments on performance or conditionsReliable, good QA docsQAFreeform; visible in supplier summary
+
+
+📦 Product Table (Aligned with Unified Subtype)
+FieldDescriptionExampleOwnerComment / Linkage / PurposeProduct IDUnique product identifierPRD-BIO-001ERP ArchitectPrimary key for finished products; may link to a Product Version IDProduct NameDisplay name for the productBuffered SalineQAShown on labels, used in external communicationProduct SourceClearly declares origin;InternalQAcan be derived or storedCategoryProduct group (aligns with Item Category)BiologicalQAEnum; drives valid Subtype optionsSubtypeFunctional role of product (replaces Usage Type)Finished ProductQAEnum; must match allowed values per Category (see Logic Table)Spec Version LinkedVersion of specification approved for this productSPEC-2025-V3QALinks to approved spec file or QA recordProduct Label NameName used for label printingSaline, Sterile 50mlQACan differ from internal product name; UI-facingDefault Unit of SaleStandard unit for packaging and sale1 BottleSales/QAUsed in batch planning and order generationShelf Life (months)Maximum usable duration for product batches24QAUsed in batch expiry trackingQA Required?Whether QA sign-off is needed for releaseYesQADerived or assigned; triggers approval workflowTraceability Required?Minimum level of traceabilityBatch-levelQADrives enforcement for labelling, barcode, and batch linkage
+
+📐 Product Version Table (Aligned with Unified Subtype)
+FieldDescriptionExampleOwnerComment / Linkage / PurposeProduct Version IDUnique identifier for version of productPRD-BIO-001-V1ERP ArchitectPrimary key for tracking changes across spec, label, QA approvalProduct ID (FK)Foreign key reference to Product TablePRD-BIO-001ERP ArchitectLinks to parent ProductSKU (if applicable)SKU for finished biological productsBIO-FP-ASTX-5-v1.0QAOnly for SKUs meant for sale; required for traceability and external referenceSubtypeFunctional role within product categoryFinished ProductQAMust match allowed Subtype for the Product’s CategorySpec VersionSpecific version of specification appliedSPEC-2025-V3QATracks approved test protocols, inputs, and tolerancesStatusVersion lifecycle statusActiveQAEnum: Draft / Active / ObsoleteEffective Start DateStart date of version applicability2025-07-01QADrives which version is used for batch releaseEffective End DateEnd date of version applicability—QALeft blank if version is currentNotesOptional revision history or commentsInitial formulationQAContext for audit trail
+🔗 Supplier-Product Table (Corrected Format)
+FieldDescriptionExampleOwnerComment / LinkageItem CodeFK to Item MasterCHE-RM-CA-001ERP ArchitectRequired FK; defines traceability applicabilitySupplier NameVendor supplying the product (if external)Calgon ScientificProcurementMust match entry in Supplier MasterManufacturer NameActual manufacturerThermo FisherQANeeded for QA doc consistencyGradeShould align with Item Record gradeFCCQAEnum; affects QA and batch logicProduct CodeCatalog or internal manufacturer codeQ21474QAFreeform field for lookupsPackaging DescriptionCommercial packaging unit100g bottleInventoryUsed for storage and labelingCatalog URLSupplier page for cross-verification[Link]QAOptional referenceBatch Code Format Known?Whether batch code structure is known and documentedYesQAMust be Yes if traceability ≥ Batch-levelBatch Code QualityQA-rated enum: High / Medium / LowMediumQAReflects clarity and consistency of code usedTraceability LevelDerived traceability from this vendorBatch-levelQAShould match Item Traceability Level or higherCOA Mandatory?Certificate of Analysis must be providedYesQADerived; must be Yes if QA RequiredSDS Mandatory?Safety Data Sheet requiredYesQAMandatory for all hazardous chemicalsSpec Sheet File / URLUpload or link to product spec[Link]QAReviewed as part of QA checklistDefault?Preferred vendor-product pairYesProcurementUsed in automation and vendor selectionApproved?Has QA formally approved this supplier for the item?YesQAApproval flagLast Reviewed OnDate of last QA validation01-Jul-2024QATime-stamp for audit trailNext Review DueWhen next QA check is expected01-Jan-2025QABased on frequencyReview Frequency6 months / 1 year / On change6 monthsQAEnum-based cadence
+
+🧪 Batch Table (Aligned with Unified Subtype)
+FieldDescriptionExampleOwnerComment / Linkage / PurposeBatch IDUnique ID for each received or created batchBATCH-BIO-FP-OMEGA3-v1-20240720-BS2401Inventory
+Must follow format for internal batchesItem Record ID (FK)Link to item definitionCHE-SOL-ETH-001InventoryEnsures traceability back to specificationSubtypeSubtype classification for the batchSolventQAMust be consistent with item’s Subtype and CategorySupplier Product IDID of the supplier product (if procured externally)SP-CHE-SOL-ETH-LQR-001ProcurementProvides vendor traceabilityQuantity ReceivedAmount of material received10 LInventoryMust be entered in standard UOMReceived DateWhen the batch was received2025-07-10InventoryUsed to calculate shelf life, triggers QAExpiry DateBatch expiration date2027-07-10QADerived from Product Version or COAQA StatusCurrent QA statusPendingQAEnum: Pending / Approved / Quarantined / RejectedStorage LocationWhere the batch is currently storedCHE-FR-01-TOPInventoryUsed for location-based access and audit
+🏷️ Storage Zone Table
+FieldDescriptionExampleOwnerComment / Linkage / PurposeZone IDUnique code for warehouse zoneZONE-FRZ-001ERP ArchitectUsed for grouping storage locationsZone NameHuman-readable nameFreezer Zone 1InventoryFor operational clarityTemperature RangeTemperature range supported-20°C to -10°CInventoryDrives compatibility checksHumidity Controlled?Whether humidity is regulatedYesQARequired for moisture-sensitive materialsHazard CompatibilityTypes of hazards permitted in zoneFlammable, AcidQABased on DC-9 segregation rulesDefault for CategoryIf this zone is the default for a categoryCHEMICALInventoryUsed in automated assignment
+📦 Storage Location Table
+FieldDescriptionExampleOwnerComment / Linkage / PurposeLocation IDUnique code for individual storage pointLOC-FRZ-A1ERP ArchitectBarcode addressableZone IDFK to Storage Zone TableZONE-FRZ-001InventoryFor temperature and hazard compatibility checksRack/ShelfPhysical sub-location informationRack 1, Shelf AInventoryHelps picking and replenishmentMax CapacityCapacity in volume or units500 bottlesInventoryPrevents overstockingActive?Whether this location is active for useYesInventoryHelps manage maintenance, cleaning, downtime
+🧾 Customer Master Table 
+FieldDescriptionExampleOwnerComment / Linkage / PurposeCustomer CodeUnique identifier for the customer or recipient entityCUS-AMALAERP ArchitectUsed for FK in A2.3 Inventory Transaction LedgerCustomer NameFull legal name of the institution or companyAmala Cancer Research CenterSales / DispatchShown in labels, QA dispatch checksAddress Line1Primary address (building, street)Amala Nagar, ThrissurSalesDispatch purpose; visible in QA and shipment docsAddress Line2Additional address detailsKerala 680555SalesOptional – use only if needed for clarityCityCity of recipientThrissurSalesUsed in address label printingStateState or provinceKeralaSalesUsed for courier optimization, GST regionsPostal CodePostal/ZIP code680555SalesRequired for courier / taxCountryCountry of customerINSalesNeeded for international dispatchContact PersonDefault contact for this recipientDr. JanardhananSales / QAShown in QA review, labels, dispatch formsPhonePhone number for contact9876543210Sales / DispatchNeeded for courier deliveryEmailContact email addressjanardhanan@amala.inSalesOptional – used for sending COA/docsTypeEnum: Research, Clinical, Commercial, CM, InternalResearchSalesUsed for traceability & dispatch filtersGSTINGST identification number (India-specific)32ABCDE1234F1Z5FinanceRequired for commercial invoice if applicablePreferred CourierEnum or free-text to indicate default courierProfessional CourierDispatchUsed in A2.3 defaultingQA Required Before ShipWhether QA approval must be completed before shippingYesQADrives enforcement of QA review prior to SHIP-CUS / SHIP-CMApproved?Flag to enable/disable dispatch to this customerYesQA / ManagementApproval workflow for new recipientsApproved OnDate customer was approved2024-03-10QA / AdminFor audit trailRemarksOptional notes – e.g., QA rules, delivery quirks, POC availabilityNeeds special label formatQA / DispatchFreeform; visible on shipment planning sheet
+
+
+🔹 Section B: Enum Tables
+✅ Category/Subtype - Enum Mapping Reviewed
+CategorySubtype CoverageRCV Enum Needed?✅ CommentsBiologicalRaw Material, Additive, Carrier, Finished ProductYes (RCV-PUR, RCV-FG)Standard raw materials and batch-based finished goods; traceable.ChemicalSolvent, Flammable Solid, Compressed Gas, Oxidizer, Corrosive Acid/Base, Reactive, Toxin, Waste, etc.Yes (RCV-PUR, RCV-MIS)Must support traceable (hazardous) and optionally misc for cleaning.Biological & ChemicalCombines aboveYesNo extra enum needed — logic handled by dual mapping.PackagingBottle, Cap, Label, Blister, Desiccant, Pouch, Box✅ RCV-PACKUsed for dispatch readiness and material planning.PlasticwaresTube, Rack, Pipette, Container, Tip Box, PlateOptional (RCV-MIS)Only needed if inventory-managed; else just cost entries.ElectricalSensor, Connector, Panel, Wiring, Controller✅ RCV-ENGEngineering material tracked like assets.EquipmentMachine, Tool, Filter, Pump, Glassware, Valve✅ RCV-ENGCapital inventory with long-term tracking.ConsumablesGlove, Mask, Battery, Wipe, Apron, Cleaning Agent✅ RCV-MISOptional tracking unless critical to process QA.StationeryNotebook, Marker, File, Tape, Binder❌ Not neededExpense only — skip tracking in A2.3 unless internal audit requires.
+🔥 Chemical subtypes
+ERP safety classification (from DC-9). Used for segregation, storage, and compatibility.
+Enum ValueDescriptionSolvents/FlammablesVolatile organic chemicals (e.g., alcohols, ketones) prone to ignitionFlammable SolidsSolid substances that can easily ignite and burn rapidlyCompressed GasesGases under pressure; explosion risk under heat or ruptureOxidizersChemicals that release oxygen and enhance combustionCorrosive AcidsAcidic materials that cause severe burns (e.g., HCl, HNO₃)Corrosive BasesAlkaline substances that burn or irritate skin (e.g., NaOH, KOH)Reactive AgentsUnstable materials that may explode, polymerize, or self-reactToxins/PoisonsHarmful if inhaled, ingested, or absorbedPeroxide-FormersCan form explosive peroxides over time (e.g., ethers)BiohazardsBiological agents with infection or contamination riskNutrient InputsOrganic or inorganic feedstock; low hazard unless misusedWaste/RecyclablesPost-use materials requiring safe disposal or recovery
+🧪 Chemical Family
+Subgroup within hazard category. Used for compatibility rules, visual grouping, and safety flags.
+Chemical SubtypeExample Chemical FamiliesOxidizersPeroxides, Nitrates, ChloratesSolvents/FlammablesAlcohols, Ketones, HydrocarbonsCorrosive AcidsHydrochloric Acid (HCl), Nitric Acid (HNO₃), Citric AcidCorrosive BasesSodium Hydroxide (NaOH), Potassium Hydroxide (KOH), AmmoniaPeroxide-FormersDiethyl Ether, Tetrahydrofuran (THF)Toxins/PoisonsCyanides, Aflatoxins, Arsenic CompoundsBiohazardsBacteria, Viruses, Bloodborne Pathogens
+Form, Grade, Hazard Class & Contamination, UOM
+
+EnumTypeCode / ValueDescriptionFormPowderDry powderLiquidFluidSoftgelEncapsulated gel formCapsuleHard shell capsuleTabletSolid compressed dosage form (flat or round), including chewables and coated tabletsGradeACSReagent-grade, suitable for analytical chemistryUSPU.S. Pharmacopeia standardFCCFood Chemical Codex (food-grade)LabGeneral lab use, not pharmacopeiaTechTechnical grade – not suitable for ingestionCustomSupplier-labeled or proprietary blendHazard ClassFlammableFire hazard (GHS)OxidizerEnhances combustionCorrosiveCauses severe skin burns and eye damageContamination RiskLowVery low microbial/chemical riskMediumMedium risk; additives, lab chemicalsHighHigh exposure or contact risk
+
+RefEnum SetExamplesUsed InENUM.UOMUnit of Measurekg, g, L, bottleItem, Batch
+
+🔹 ENUM TABLE A2.1-TXNTYPE (TRANSACTION TYPE)
+CodeLabelImpactDescriptionRCV-PURPurchase Receipt+QtyInbound from external supplierRCV-INTInternal Production Receipt+QtyOutput from internal manufacturingRCV-PACKPackaging Material Receipt
++Qty
+Packaging items like bottles, blisters, cartons, etc., received into inventoryRCV-ENGReceive Engineering / Asset item+QtyNon-batch engineering assets like tanks, light stands, tools. (Electrical and Equipment)RCV-MIS
+Receive Miscellaneous Non-Tracked+Qty /0Items like carry bags, marketing brochures, etc., logged optionally.ISS-MISCIssue Miscellaneous (e.g., stockroom use)−QtyFor consumption outside formal MFG/R&DADJ-CYCLECycle Count Adjustment±QtyFor periodic bulk-level adjustment from inventory sheet reconciliationRCV-FGReceive Finished Goods from CM+Qty
+Finished goods received back from contract manufacturer.ISS-MFGIssue to Manufacturing−QtyConsumption for internal productionISS-QCIssue to QC−QtySent to quality control or testingISS-RNDIssue to R&D−QtyUsed for research, experimentsXFERInternal Transfer0Movement within inventoryRET-VNDReturn to Vendor−QtyRejected goods returned externallyRET-INTInternal Return+QtyReturned to usable stockADJ-GAINAdjustment - Gain+QtyManual correction for gainADJ-LOSSAdjustment - Loss−QtyManual correction for lossSCRAPScrap / Disposal−QtyIrretrievable waste (expired, broken)SHIP-CUSCustomer Shipment−QtyFinal product sent to customerSHIP-CMShipment to Contract Manufacturer−QtyMaterial sent out to a supplier for contract processing. Ownership retained. May return as finished good or be consumed in production.BLOCKQA Hold / Blocked0Item held pending QARELEASEReleased from Hold0QA-approved item returned to stockSAMPLE-INSample Received+QtyExternal or internal sample logged inSAMPLE-OUTSample Issued−QtySent to external labs or clients for evaluation
+
+Section C: Logic & Derived Fields
+Each logic block below uses the reference codes from Section D (e.g., LOGIC.C1) and follows a MECE format for clarity.
+
+📐 LOGIC.C1 — QA Required?
+🧠 Field: QA Required?
+Derived From:
+· Grade
+· Critical to Product?
+· Contamination Risk
+· Traceability Level (default minimum required)
+Logic Tree:
+ConditionResultGrade ∈ {USP, FCC, ACS, Food}YesOR Critical to Product? = YesYesOR Contamination Risk = HighYesOR Traceability Level ≥ Batch-levelYesELSENoImpacts:
+· Triggers: COA Mandatory?, Spec Required?, QA Status
+· If Yes, QAReviewID must be filled in A2.2
+· Controls whether QA disposition is needed before transaction (A2.3)
+Linked Docs:
+· A2.1 (Item, Product, Batch tables)
+· A2.2 (QA Review linkage)
+· A2.3 (QARequired enforcement)
+· DC-1 (Validation Rule Script: QA Gate Check)
+
+📐 LOGIC.C2 — Traceability Level
+🧠 Field: Traceability Level
+Derived From:
+· QA Required?
+· Batch Code Format Known?
+· Contamination Risk
+· Spec Verified?
+Logic Tree:
+ConditionTraceability LevelQA Required? = No AND Contamination Risk = LowNoneQA Required? = Yes AND (Contamination Risk = Medium OR Batch Code Format Known? = No)BasicQA Required? = Yes AND Batch Code Format Known? = Yes AND Spec Verified? = NoBatch-levelQA Required? = Yes AND Batch Code Format Known? = Yes AND Spec Verified? = YesFullImpacts:
+· Determines required fields in A2.3: Batch ID, QA Status, Expiry
+· Controls whether supplier-product record must define batch format
+· Impacts QA Review granularity (batch vs. unit-level)
+Linked Docs:
+· A2.1 (Item, Supplier-Product)
+· A2.3 (Transaction traceability fields)
+· DC-1 (QA logic for form enforcement)
+
+📐 LOGIC.C3 — COA / SDS / Spec Required?
+🧠 Fields: COA Mandatory?, SDS Mandatory?, Spec Required?
+Derived From:
+· QA Required?
+· Hazard Class
+· Traceability Level
+Logic Tree:
+ConditionCOA?SDS?Spec?Hazard Class ≠ null—Yes—Traceability Level ≥ Batch-levelYes—YesQA Required? = YesYes—YesELSENoNoNoImpacts:
+· Defines required documentation during batch intake
+· Drives document upload fields in QA Review Table (A2.2)
+· Failure to upload = blocked transaction in A2.3 if required
+Linked Docs:
+· A2.1 (Item, Supplier-Product)
+· A2.2 (QA Match Table)
+· A2.3 (Transaction doc requirements)
+· DC-1 (COA/SDS upload enforcement)
+
+📐 LOGIC.C4 — Segregation Rule Required?
+🧠 Field: Segregation Rule Required?
+Derived From:
+· Hazard Category
+· Chemical Family
+Logic Tree:
+ConditionSegregation Rule?Hazard Category ∈ {Flammable, Corrosive, Oxidizer, Reactive}YesChemical Family = Incompatible with others in same zoneYesELSENoImpacts:
+· Enforces warehouse storage rules
+· Drives assignment to dedicated storage zones in A2.3
+· Linked to validation rules in DC-9 enum mapping
+Linked Docs:
+· A2.1 (Item, Batch, Storage Assignment)
+· A2.3 (Storage Zone validation)
+· DC-9 (Hazard compatibility enum)
+
+📐 LOGIC.C5 — Review Due Date
+🧠 Field: Review Due Date
+Derived From:
+· Last Reviewed On
+· Review Frequency
+Logic Tree:
+ConditionReview Due DateReview Frequency = 6 monthsLast Reviewed On + 180dReview Frequency = 1 yearLast Reviewed On + 365dReview Frequency = On changeBlank (manual only)ELSEBlankImpacts:
+· Triggers QA calendar flags in dashboard
+· Warns ERP if supplier/product is overdue for reapproval
+· Cross-validates with QA Review Table (A2.2)
+Linked Docs:
+· A2.1 (Supplier, Supplier-Product, Customer tables)
+· A2.2 (QA Review expiration checks)
+· A2.3 (Optional: enforcement before transaction)
+
+📐 LOGIC.C6 — Default Supplier-Product
+🧠 Field: Default?
+Derived From:
+· Approved? = Yes
+· Preferred Vendor flag = Yes
+Logic Tree:
+ConditionDefault?Approved? = Yes AND Preferred Vendor = YesYesApproved? = Yes AND only one Supplier-Product for the itemYesELSENoImpacts:
+· Sets auto-fill for vendor selection during purchasing
+· Controls default supplier linkage for GRN and Batch creation
+Linked Docs:
+· A2.1 (Supplier-Product table)
+· A2.3 (GRN auto-fill and validation logic)
+· DC-1 (Default vendor selection rule)
+
+📐 LOGIC.C7 — Spec Sheet Verified?
+🧠 Field: Spec Verified?
+Derived From:
+· Spec Uploaded
+· QA Sign-off
+Logic Tree:
+ConditionSpec Verified?Spec Uploaded = Yes AND QA Sign-off = ConfirmedYesSpec Uploaded = Yes AND QA Sign-off = Not ConfirmedNoSpec Uploaded = NoNoImpacts:
+· Required to reach Full Traceability Level
+· Impacts ability to auto-approve batches from vendor
+· Shows on QA dashboard for review status
+Linked Docs:
+· A2.1 (Item, Supplier-Product)
+· A2.2 (QA Review spec match row)
+· A2.3 (Batch QA disposition logic)
+· DC-1 (Spec verification enforcement)
+Section D: Glossary + Cross-Doc Map 
+
+TermDefinition / PurposeUsed InLogic Ref / Enum SourceSpec SheetQuality specification benchmark expected to be met by the COA. May be internally defined (Pluviago) or from supplier (TDS).Product Version, QA Review, Supplier-ProductLogic.C7TDS (Technical Data Sheet)Supplier-provided spec sheet describing typical parameters and limits for a product or ingredient. Often used when internal spec is not set.A2.2 QA Review TableSpec SourceProduct VersionInternal configuration of a product including formulation, version ID, label, and linked spec. Drives release logic.A2.1 Product Version TableTraceability, QAQA RequiredIndicates if QA review is mandatory based on Grade, Criticality, etc.Item, Product, BatchDerived Field Logic C.1Traceability LevelScope of tracking: None, Basic, Batch, FullItem, Batch, TransactionLogic Table C.1COA MandatoryCertificate of Analysis must be collectedItem, Supplier-ProductDerived from QA RequiredSDS MandatorySafety Data Sheet must be uploadedItemDerived from Hazard ClassSpec RequiredWhether internal/external specification file is expectedItem, Supplier-ProductLogic Table C.2EnumControlled value set for a dropdownAll modulesDefined in Section B / A1.xDerived FieldField value is calculated by logic, not user enteredItem, Product, BatchLogic TablesLogic.C1Logic for QA Required? and Traceability Level derivationA2.1 Part CSee example belowLogic.C2Logic for document requirement fields like COA/SDS/SpecA2.1 Part C—DC-1ERP Validation Script DocumentCross-moduleEnforces rules on transactionsDC-9Enum source for Hazard Category, Chemical Family, etc.Item, QAEnum IntegrationA2.2QA Review Table, stores document validation outcomesBatch, UnitQA ID linkageA2.3Transaction Ledger, records product movement, batch use, QA statusInventory eventsTransaction ID, QAReviewIDA4Integration map tying together SKU → Batch → QA → TransactionsReference architectureHierarchical linkagesA1.xEnum glossary for consistent dropdown values across ERPAll modulesEnum registry
+
+📗 Glossary Field Refs (GLOSS.*)
+RefTermDefinition / PurposeGLOSS.ID1Item Record IDStructured ID used across A2.1–A2.3 for traceabilityGLOSS.ID2Item NameHuman-readable name used in labels and QAGLOSS.CRITCritical to Product?Boolean flag used to enforce traceability, QA, and spec controls
+
+🎓 Appendix: Glossary (Excerpt)
+· Storage Zone: Macro-level area like RM Store or QA Hold
+· Storage Location: Exact shelf/bin (e.g., QA-Shelf-3)
+· QA Status: Final QA disposition for a batch/unit
+· COA: Certificate of Analysis
+· SDS: Safety Data Sheet
+· Used In: Batch or experiment ID consuming this item
+· Traceability Level: Defines the depth at which movement and usage is tracked (e.g., Unit-level, Batch-level, Category-level)
+· SpecMatch: Indicates whether the observed material matches the product specification defined in the product master
+· SerialNumber: Unique identifier assigned to an equipment or instrument
+· CalibrationDate: Last calibration date recorded for compliant operation
+· MaintenanceDueDate: Next scheduled maintenance to avoid downtime
+· PhysicalLocation: Real-world fixed place of storage for instruments
+
+Examples
+📘 Format Key Definitions
+These keys are used in structured ID fields like Item Record ID and SKU:
+· CAT = Category Code (e.g., CHE = Chemical, BIO = Biological)
+· USG = Usage Type Code (e.g., RM = Raw Material, FP = Finished Product)
+· CODE = Short Item Code (e.g., CA = Calcium, ASTX = Astaxanthin)
+· xxx = Placeholder for 2–5 character unique code or product short name
+Example:
+· CHE-RM-CA-001 → Chemical Raw Material, Calcium
+· BIO-FP-ASTX-5-v1.0 → Biological Finished Product, Astaxanthin 5%, version 1.0
+
+🔍 Batch Breakdown
+ComponentMeaningExampleSourceBATCHFixed prefixBATCHAuto-fixedBIO-FP-OMEGA3ItemCodeProduct short code (from A2.1)A2.1 Item Masterv1Product formulation versionv1 = version 1Product Version Table20240720Batch start dateYYYYMMDDProduction PlanBS2401Batch Sequence = BS + YY (year) + NN (batch #)BS2401 = first batch in 2024Batch Master Table (increment logic per year+item)🧩 Integration Clarity Using A4 Structure
+From A4, this relationship is crucial and should be noted clearly in A2.3 documentation:
+Item Master (A2.1) → SKU → Batch Number → QA Review → Transaction Record (A2.3)
+Examples:
+· SKU = BIO-FP-ASTX-5-v1.0
+· Batch Number = BIO-FP-ASTX-5-v1.0-20240612-01
+· QAReviewID = QA-20240613-007
+· TransactionID = TXN-20240614-003
+:
+· Supplier Example: SUP123 — Algamo S.R.O., Czech Republic
+· Product Example: ASTX-5 — Astaxanthin 5% Softgel
+· Version Example: ASTX-5-v1.0 — 5% Astaxanthin, Approved: 2023-01-01
+· Item Example: BIO-FP-ASTX-5-v1.0 — Bottle of 60 capsules, Ambient, 24 months
+· Batch Example: ASTX-V1.2-20240612-01 — 1000 bottles, Passed QA
+· Storage Example: STG001 — 200 bottles stored at LOC001 (Main Warehouse)
+
+
+
+
+Section E: Traceability Governance, Implementation Practices & Future Extensions
+This A2.1 schema is designed for long-term adaptability, ensuring Pluviago’s traceability logic scales ethically and modularly across operations
+E.1 – System Governance Notes
+· All derived fields follow rules in the Traceability QA Glossary (v1.0).
+· Item records with Traceability Level = None or Basic:
+o Do not require batch code tracking or supplier traceability fields.
+· Supplier-Product table manages traceability enablers (e.g., known batch format, spec presence), not logic.
+· QA verification activities (COA/SDS/spec review) are not tracked inside Item Record.
+o They are logged in the QA Review Table.
+· The Traceability Level field controls system-required QA steps:
+o None = minimal QA and supplier oversight.
+o Basic = manual QA + flagged supplier.
+o Batch-level = incoming batch documents required.
+o Full = all documents required + validated.
+· Use this document as the master schema for traceability-driven QA setup.
+· Ensure ERP validation scripts, onboarding processes, and DC-1 transaction fields conform to this structure.
+· Hazard Class is imported from the SDS (e.g., Acute Toxicity, Flammable Liquid).
+· Hazard Category and Chemical Family are selected from the Chemical MDM Standard (DC-9).
+· Together, these determine QA needs, storage location compatibility, and inventory segregation logic for chemical items.
+·
+·
+
+
+📌 E.2 Implementation Recommendations
+These guidelines ensure consistent, valid, and traceable master data across modules.
+· Every new item must have a valid Item Record in this A2.1 file
+· SKU codes must be used only for finished biological products and must link to Product and Version IDs
+· Maintain full batch-level detail including expiry date, manufacturing origin, and storage condition
+· The QA Required? flag should match the item’s grade and intended use
+· The Hazard Class field must be completed for all chemical items
+· Storage compatibility must be checked before assigning to warehouse zones
+· Batch fields such as Batch Source and Batch Type must be filled for traceability
+· Use consistent naming and formatting rules across tables
+· Use this document as a living master register and update during onboarding or change events	
+· For Category = Chemical, the fields Hazard Category and Chemical Family must be completed.
+·  Storage zone and segregation rules are triggered based on these values.
+· Hazard Class (from SDS), Hazard Category (from DC-9), and Chemical Family work together to define handling and QA flags.
+· All dropdown values are enforced via DC-9 integration and reviewed quarterly.
+
+📦 Factory Readiness & Transient States Modeling
+This section ensures that A2.1 supports future internal production workflows, including harvesting, QA cycles, and internal traceability.
+The model is designed to:
+· Track stock transitions across states: Reserved, In-Transit, Pending Acceptance, etc.
+· Support internal batch creation and scheduling (e.g., harvest, reactor runs)
+· Record internal QA flows, product holds, and results from labs
+· Handle mixed inventory: both externally purchased and internally produced items
+· Model status flags and placeholders for future ERP automation
+
+System logic has been structured to:
+· Track item/batch status across each handover point in the value stream
+· Accommodate production run linkage (e.g., PRN- codes)
+· Enable dispatch, quarantine, and rejection handling without schema rewrites
+These readiness layers are passive but extendable, ensuring A2.1 evolves with Pluviago’s future factory capabilities.
+This section ensures the module aligns with both current traceability needs and future algae production workflows. Transient states such as Reserved, In-Transit, and Pending Acceptance are explicitly modeled in all documents.
+
+For factory readiness, this module:
+· Accommodates internal batch creation and scheduling (P15–P21).
+· Supports internal QA flows and harvest recording.
+· Ensures that status flows remain flexible and upgradeable without schema rewrites.
+ERP logic and data schemas have been updated to:
+· Track status of stock at every handover point.
+· Include internal bioreactor runs, QA, and storage logic as placeholders (even if inactive).
+· Allow reservation and dispatch fields to handle both external and internal use cases.
+· Every SKU must have an Item Record before use
+· SKUs must link to Product + Version IDs
+· QA Required? flag must match grade + use case
+· Hazard Class must be present for all chemicals
+· Storage compatibility must be ERP-enforced
+· Batch Source and Batch Type must be recorded for all batch entries
+· Versioned? flag should guide when to maintain Product Versions
+This document serves as a living master register for all product-related data and should be reviewed during every new item onboarding or vendor change.
+
+E.4 Future Expansion Structures
+
+CRM-CUSTOMERS: CRM & Relationship Master
+· Purpose: To track sales and collaboration pipeline.
+· Fields to include:
+Field NameDescriptionCRM_IDInternal CRM identifierCustomerCodeForeign key to A2.1-CUSTOMERS if availableCompanyNameFull company nameRelationshipStageEnum: Prospect, Engaged, Preferred, DormantLastEngagedDateMost recent interaction datePointOfContactContact personPreferredProductsShort notes on product types they are interested inPotentialValueQualitative or quantitative assessmentNotesFree text
+Internal Batch Master Table: 
+· InternalBatchID
+· ProductionRunStart
+· ProductionRunEnd
+· RunOutputQty
+· InputsUsed[] (array or linked rows)
+· BioreactorCode (if used)
+· OperatorName
+· Internal QA Review ID
+

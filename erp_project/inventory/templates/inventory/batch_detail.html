@@ -1,0 +1,336 @@
+{% extends 'inventory/base.html' %}
+{% load static %}
+
+{% block title %}Batch Detail - {{ batch.batch_id }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Batch Details</h1>
+            <p class="text-muted">{{ batch.batch_id }}</p>
+        </div>
+        <div>
+            <a href="{% url 'inventory:batch_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Batches
+            </a>
+            <a href="#" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit Batch
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Batch Information -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-box"></i> Batch Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Batch ID:</strong></td>
+                                    <td><code>{{ batch.batch_id }}</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Item:</strong></td>
+                                    <td>
+                                        <a href="{% url 'inventory:item_detail' batch.item_record_id.item_record_id %}">
+                                            {{ batch.item_record_id.item_name }}
+                                        </a>
+                                        <br><small class="text-muted">{{ batch.item_record_id.item_record_id }}</small>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Subtype:</strong></td>
+                                    <td>{{ batch.subtype }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Supplier:</strong></td>
+                                    <td>
+                                        {% if batch.supplier_code %}
+                                            <a href="{% url 'inventory:supplier_detail' batch.supplier_code.supplier_id %}">
+                                                {{ batch.supplier_code.supplier_name }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">Internal</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Batch Source:</strong></td>
+                                    <td>
+                                        <span class="badge bg-{% if batch.batch_source == 'External' %}primary{% elif batch.batch_source == 'Internal' %}success{% else %}warning{% endif %}">
+                                            {{ batch.batch_source }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Batch Type:</strong></td>
+                                    <td>
+                                        <span class="badge bg-{% if batch.batch_type == 'Production' %}success{% elif batch.batch_type == 'R&D' %}info{% elif batch.batch_type == 'Sample' %}warning{% else %}secondary{% endif %}">
+                                            {{ batch.batch_type }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Quantity Received:</strong></td>
+                                    <td>{{ batch.quantity_received }} {{ batch.item_record_id.uom }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Received Date:</strong></td>
+                                    <td>{{ batch.received_date|date:"M d, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Expiry Date:</strong></td>
+                                    <td>
+                                        {% if batch.expiry_date %}
+                                            <span class="{% if batch.expiry_date|date:'Y-m-d' <= 'now'|date:'Y-m-d' %}text-danger{% elif batch.expiry_date|date:'Y-m-d' <= 'now'|date:'Y-m-d'|add:'30' %}text-warning{% else %}text-success{% endif %}">
+                                                {{ batch.expiry_date|date:"M d, Y" }}
+                                            </span>
+                                            {% if batch.expiry_date|date:'Y-m-d' <= 'now'|date:'Y-m-d' %}
+                                                <span class="badge bg-danger">EXPIRED</span>
+                                            {% elif batch.expiry_date|date:'Y-m-d' <= 'now'|date:'Y-m-d'|add:'30' %}
+                                                <span class="badge bg-warning">EXPIRING SOON</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">Not set</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>QA Status:</strong></td>
+                                    <td>
+                                        <span class="badge bg-{% if batch.qa_status == 'Approved' %}success{% elif batch.qa_status == 'Pending' %}warning{% elif batch.qa_status == 'Quarantined' %}danger{% else %}secondary{% endif %}">
+                                            {{ batch.qa_status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Storage Location:</strong></td>
+                                    <td>
+                                        {% if batch.storage_location %}
+                                            {{ batch.storage_location.location_id }}
+                                            <br><small class="text-muted">{{ batch.storage_location.zone_id.zone_name }}</small>
+                                        {% else %}
+                                            <span class="text-muted">Not assigned</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QA Review Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clipboard-check"></i> QA Review Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if batch.qa_reviews.all %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Review ID</th>
+                                        <th>Reviewer</th>
+                                        <th>Date</th>
+                                        <th>Outcome</th>
+                                        <th>Documents</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for review in batch.qa_reviews.all %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'inventory:qa_review_detail' review.qa_review_id %}">
+                                                {{ review.qa_review_id }}
+                                            </a>
+                                        </td>
+                                        <td>{{ review.qa_reviewer }}</td>
+                                        <td>{{ review.review_date|date:"M d, Y" }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if review.review_outcome == 'Approved' %}success{% elif review.review_outcome == 'Conditional' %}warning{% elif review.review_outcome == 'Rejected' %}danger{% else %}secondary{% endif %}">
+                                                {{ review.review_outcome }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if review.coa_attached %}<span class="badge bg-info">COA</span>{% endif %}
+                                            {% if review.sds_attached %}<span class="badge bg-info">SDS</span>{% endif %}
+                                            {% if review.spec_attached %}<span class="badge bg-info">Spec</span>{% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No QA reviews found for this batch.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'inventory:create_transaction' %}?batch_id={{ batch.batch_id }}" class="btn btn-outline-primary">
+                            <i class="fas fa-exchange-alt"></i> Create Transaction
+                        </a>
+                        <a href="{% url 'inventory:create_qa_review' %}?batch_id={{ batch.batch_id }}" class="btn btn-outline-success">
+                            <i class="fas fa-clipboard-check"></i> Create QA Review
+                        </a>
+                        <button class="btn btn-outline-warning">
+                            <i class="fas fa-print"></i> Print Label
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Batch Statistics -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar"></i> Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary">{{ batch.inventorytransactions.count }}</h4>
+                            <small class="text-muted">Transactions</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success">{{ batch.qa_reviews.count }}</h4>
+                            <small class="text-muted">QA Reviews</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-link"></i> Related Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <strong>Item Record:</strong><br>
+                            <a href="{% url 'inventory:item_detail' batch.item_record_id.item_record_id %}">
+                                {{ batch.item_record_id.item_name }}
+                            </a>
+                        </li>
+                        {% if batch.supplier_code %}
+                        <li class="mb-2">
+                            <strong>Supplier:</strong><br>
+                            <a href="{% url 'inventory:supplier_detail' batch.supplier_code.supplier_id %}">
+                                {{ batch.supplier_code.supplier_name }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if batch.storage_location %}
+                        <li class="mb-2">
+                            <strong>Storage Zone:</strong><br>
+                            {{ batch.storage_location.zone_id.zone_name }}
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-history"></i> Recent Transactions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if batch.inventorytransactions.all %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Transaction ID</th>
+                                        <th>Type</th>
+                                        <th>Date</th>
+                                        <th>Quantity</th>
+                                        <th>User</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transaction in batch.inventorytransactions.all|slice:":10" %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'inventory:transaction_detail' transaction.transaction_id %}">
+                                                {{ transaction.transaction_id }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if transaction.transaction_type == 'RCV-PUR' %}success{% elif transaction.transaction_type == 'SHIP-CUS' %}danger{% else %}secondary{% endif %}">
+                                                {{ transaction.transaction_type }}
+                                            </span>
+                                        </td>
+                                        <td>{{ transaction.transaction_datetime|date:"M d, Y H:i" }}</td>
+                                        <td>{{ transaction.quantity }} {{ transaction.unit }}</td>
+                                        <td>{{ transaction.transaction_user }}</td>
+                                        <td>
+                                            {% if transaction.qa_status %}
+                                                <span class="badge bg-{% if transaction.qa_status == 'Approved' %}success{% elif transaction.qa_status == 'Pending' %}warning{% else %}danger{% endif %}">
+                                                    {{ transaction.qa_status }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if batch.inventorytransactions.count > 10 %}
+                            <div class="text-center mt-3">
+                                <a href="{% url 'inventory:transaction_list' %}?batch_id={{ batch.batch_id }}" class="btn btn-outline-primary">
+                                    View All Transactions
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-muted mb-0">No transactions found for this batch.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

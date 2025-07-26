@@ -1,0 +1,404 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Item Detail - {{ item.item_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-box text-primary"></i>
+                    {{ item.item_name }}
+                </h1>
+                <div>
+                    <a href="{% url 'inventory:item_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Items
+                    </a>
+                    <a href="#" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit Item
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Basic Information -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle text-info"></i>
+                        Basic Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Item ID:</strong></td>
+                            <td><span class="badge bg-primary">{{ item.item_record_id }}</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Category:</strong></td>
+                            <td><span class="badge bg-secondary">{{ item.category }}</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Subtype:</strong></td>
+                            <td>{{ item.subtype }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Grade:</strong></td>
+                            <td>
+                                {% if item.grade %}
+                                    <span class="badge bg-warning">{{ item.grade }}</span>
+                                {% else %}
+                                    <span class="text-muted">Not specified</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Unit of Measure:</strong></td>
+                            <td>{{ item.unit_of_measure }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Safety & Compliance -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-shield-alt text-warning"></i>
+                        Safety & Compliance
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Hazard Class:</strong></td>
+                            <td>
+                                {% if item.hazard_class %}
+                                    <span class="badge bg-danger">{{ item.hazard_class }}</span>
+                                {% else %}
+                                    <span class="text-muted">None</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Chemical Family:</strong></td>
+                            <td>{{ item.chemical_family|default:"Not specified" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Contamination Risk:</strong></td>
+                            <td>
+                                {% if item.contamination_risk == 'High' %}
+                                    <span class="badge bg-danger">{{ item.contamination_risk }}</span>
+                                {% elif item.contamination_risk == 'Medium' %}
+                                    <span class="badge bg-warning">{{ item.contamination_risk }}</span>
+                                {% else %}
+                                    <span class="badge bg-success">{{ item.contamination_risk }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Critical to Product:</strong></td>
+                            <td>
+                                {% if item.critical_to_product %}
+                                    <span class="badge bg-danger">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">No</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Derived Fields -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cogs text-success"></i>
+                        System-Derived Fields
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>QA Required:</strong></td>
+                            <td>
+                                {% if item.qa_required %}
+                                    <span class="badge bg-success">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">No</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Traceability Level:</strong></td>
+                            <td>
+                                {% if item.traceability_level == 'Full' %}
+                                    <span class="badge bg-danger">{{ item.traceability_level }}</span>
+                                {% elif item.traceability_level == 'Batch-level' %}
+                                    <span class="badge bg-warning">{{ item.traceability_level }}</span>
+                                {% elif item.traceability_level == 'Basic' %}
+                                    <span class="badge bg-info">{{ item.traceability_level }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ item.traceability_level }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>COA Mandatory:</strong></td>
+                            <td>
+                                {% if item.coa_mandatory %}
+                                    <span class="badge bg-success">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">No</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>SDS Mandatory:</strong></td>
+                            <td>
+                                {% if item.sds_mandatory %}
+                                    <span class="badge bg-success">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">No</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Spec Required:</strong></td>
+                            <td>
+                                {% if item.spec_required %}
+                                    <span class="badge bg-success">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">No</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Segregation Rule Required:</strong></td>
+                            <td>
+                                {% if item.segregation_rule_required %}
+                                    <span class="badge bg-warning">Yes</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">No</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Related Data -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-link text-primary"></i>
+                        Related Data
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="text-center">
+                                <h4 class="text-primary">{{ batches_count }}</h4>
+                                <p class="text-muted">Batches</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <h4 class="text-success">{{ suppliers_count }}</h4>
+                                <p class="text-muted">Suppliers</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-6">
+                            <div class="text-center">
+                                <h4 class="text-warning">{{ transactions_count }}</h4>
+                                <p class="text-muted">Transactions</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <h4 class="text-info">{{ qa_reviews_count }}</h4>
+                                <p class="text-muted">QA Reviews</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Batches -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-layer-group text-info"></i>
+                        Recent Batches
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_batches %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Batch ID</th>
+                                        <th>Supplier</th>
+                                        <th>Quantity</th>
+                                        <th>Received Date</th>
+                                        <th>Expiry Date</th>
+                                        <th>QA Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for batch in recent_batches %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'inventory:batch_detail' batch.batch_id %}" class="text-decoration-none">
+                                                {{ batch.batch_id }}
+                                            </a>
+                                        </td>
+                                        <td>{{ batch.supplier_code.supplier_name }}</td>
+                                        <td>{{ batch.quantity_received }} {{ batch.item_record_id.unit_of_measure }}</td>
+                                        <td>{{ batch.received_date }}</td>
+                                        <td>
+                                            {% if batch.expiry_date %}
+                                                <span class="{% if batch.expiry_date < today %}text-danger{% elif batch.expiry_date < today_plus_30 %}text-warning{% else %}text-success{% endif %}">
+                                                    {{ batch.expiry_date }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">Not specified</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if batch.qa_status == 'Approved' %}
+                                                <span class="badge bg-success">{{ batch.qa_status }}</span>
+                                            {% elif batch.qa_status == 'Pending' %}
+                                                <span class="badge bg-warning">{{ batch.qa_status }}</span>
+                                            {% elif batch.qa_status == 'Quarantined' %}
+                                                <span class="badge bg-danger">{{ batch.qa_status }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ batch.qa_status }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'inventory:batch_detail' batch.batch_id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No batches found for this item.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exchange-alt text-success"></i>
+                        Recent Transactions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_transactions %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Transaction ID</th>
+                                        <th>Type</th>
+                                        <th>Quantity</th>
+                                        <th>Date/Time</th>
+                                        <th>User</th>
+                                        <th>QA Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transaction in recent_transactions %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'inventory:transaction_detail' transaction.transaction_id %}" class="text-decoration-none">
+                                                {{ transaction.transaction_id }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ transaction.transaction_type }}</span>
+                                        </td>
+                                        <td>
+                                            {% if transaction.quantity > 0 %}
+                                                <span class="text-success">+{{ transaction.quantity }} {{ transaction.unit }}</span>
+                                            {% else %}
+                                                <span class="text-danger">{{ transaction.quantity }} {{ transaction.unit }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ transaction.transaction_datetime|date:"M d, Y H:i" }}</td>
+                                        <td>{{ transaction.transaction_user }}</td>
+                                        <td>
+                                            {% if transaction.qa_status %}
+                                                {% if transaction.qa_status == 'Approved' %}
+                                                    <span class="badge bg-success">{{ transaction.qa_status }}</span>
+                                                {% elif transaction.qa_status == 'Pending' %}
+                                                    <span class="badge bg-warning">{{ transaction.qa_status }}</span>
+                                                {% elif transaction.qa_status == 'Quarantined' %}
+                                                    <span class="badge bg-danger">{{ transaction.qa_status }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ transaction.qa_status }}</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'inventory:transaction_detail' transaction.transaction_id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No transactions found for this item.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

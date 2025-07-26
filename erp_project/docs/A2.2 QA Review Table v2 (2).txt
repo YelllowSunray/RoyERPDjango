@@ -1,0 +1,16 @@
+﻿Pluviago ERP A2.2 – QA Review Table Version 2.0 (Updated July 2025)
+
+📘 PURPOSE This document logs QA reviews for each received or produced batch/unit. It supports traceability, regulatory audit, and quality compliance.
+🔗 Reference:
+· QA Field Dictionary: A2.1
+· Inventory Linkage: A2 (via InventoryTxnID)
+· Document Flow Logic: A1 Section 5
+· Checklist: DC-3 QA Inventory Checklist
+
+🔹 SECTION 1: BATCH-LEVEL QA REVIEW FIELDS
+FieldPurposeMandatory?ExampleFormat / EnumQAReviewIDUnique ID for this QA review record✅ YesQA-20250719-001ERP-generated IDBatchNumberBatch under review✅ YesL-CHEM-AMMS-SQ-73394Derived from COAItemCodeProduct or chemical being reviewed✅ YesCHEM-AMMSLink to Product MasterSupplierCodeSource supplier✅ YesSUP-002As per Supplier MasterSubIngredientLogReference ID or path to the QA Sub-Ingredient Log (A1.1)✅ Yes (if ItemCategory = FinishedProduct)SUBQA-20250718-001ID or file pathCOAMatchCOA matches product and batch spec✅ YesYesYes / NoSDSMatchSDS provided and valid for batch✅ YesYesYes / NoSpecMatchMatches defined internal specification✅ YesYesYes / NoCOAAttachedDigital COA file is stored✅ YesYesYes / NoSDSAttachedDigital SDS is stored✅ YesYesYes / NoLabelAttachedDigital label image is available✅ YesYesYes / NoSpecAttachedProduct spec sheet attached✅ YesYesYes / NoDocumentMatchAll documents carry same batch code✅ YesYesYes / Partial / NoReviewOutcomeFinal QA result✅ YesApprovedApproved / Conditional / Rejected / EscalatedQAReviewerQA personnel performing review✅ Yesuser_qa01ERP User IDReviewDateDate of QA review✅ Yes2025-07-18YYYY-MM-DDQAFileLinkFolder or path to QA documentsOptional/QA_2025/CHEM-73394ERP LinkInventoryTxnIDLinked transaction in inventory logOptionalTXN-20250719-001Link to A2CommentsFree text comments or notesOptionalLabel had misalignmentFree text
+🔹 SECTION 2: UNIT-LEVEL QA REVIEW FIELDS (if applicable)
+FieldPurposeMandatory?ExampleFormat / EnumQAReviewIDLink to corresponding batch-level QA recordOptionalQA-20250719-001ERP-generated IDInventoryTxnIDLink to inventory transactionOptionalTXN-20250719-001Matches A2 TransactionIDUnitIDIdentifier for the unit✅ YesUNIT-00001ERP-assignedBatchNumberBatch to which this unit belongs✅ YesL-73394Matches above tableSubIngredientLogReference ID or path to the QA Sub-Ingredient Log (A1.1)✅ Yes (if ItemCategory = FinishedProduct)SUBQA-20250718-001ID or file pathVisualCheckLabeling, damage, visual QA✅ YesPassedPassed / FailedSpecCheckUnit-level QC spec confirmationOptionalPassedPassed / FailedDispositionApproved, Quarantined, or Rejected✅ YesApprovedEnumReviewerQA reviewer ID✅ Yesqa_user02ERP User IDReviewedOnDate of check✅ Yes2025-07-19YYYY-MM-DDNotesComments or observationsOptionalSlight dentFree text
+
+📌 Example: QA Review Record (A2.2 Section 1 + A1.1 link)
+FieldValueQAReviewIDQA-20250719-001BatchNumberFPB-OMEGA-VITD-CURC-001ItemCodeFP-TRIO-CAPSSupplierCodeMFG-SOFTGEL-001SubIngredientLog✅ Yes (link to A1.1)COAMatchYesSDSMatchYesReviewOutcomeApprovedQARevieweruser_qa03QAFileLink/QA_2025/BATCH-001

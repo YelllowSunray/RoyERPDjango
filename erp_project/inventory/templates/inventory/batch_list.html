@@ -1,0 +1,237 @@
+{% extends 'inventory/base.html' %}
+{% load static %}
+
+{% block title %}Batches{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Batches</h1>
+            <p class="text-muted">Manage and track all inventory batches</p>
+        </div>
+        <div>
+            <a href="#" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Create Batch
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           value="{{ request.GET.search }}" placeholder="Batch ID, Item Name...">
+                </div>
+                <div class="col-md-2">
+                    <label for="qa_status" class="form-label">QA Status</label>
+                    <select class="form-select" id="qa_status" name="qa_status">
+                        <option value="">All Statuses</option>
+                        <option value="Pending" {% if request.GET.qa_status == 'Pending' %}selected{% endif %}>Pending</option>
+                        <option value="Approved" {% if request.GET.qa_status == 'Approved' %}selected{% endif %}>Approved</option>
+                        <option value="Quarantined" {% if request.GET.qa_status == 'Quarantined' %}selected{% endif %}>Quarantined</option>
+                        <option value="Rejected" {% if request.GET.qa_status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="batch_source" class="form-label">Source</label>
+                    <select class="form-select" id="batch_source" name="batch_source">
+                        <option value="">All Sources</option>
+                        <option value="External" {% if request.GET.batch_source == 'External' %}selected{% endif %}>External</option>
+                        <option value="Internal" {% if request.GET.batch_source == 'Internal' %}selected{% endif %}>Internal</option>
+                        <option value="CM" {% if request.GET.batch_source == 'CM' %}selected{% endif %}>CM</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="batch_type" class="form-label">Type</label>
+                    <select class="form-select" id="batch_type" name="batch_type">
+                        <option value="">All Types</option>
+                        <option value="Production" {% if request.GET.batch_type == 'Production' %}selected{% endif %}>Production</option>
+                        <option value="R&D" {% if request.GET.batch_type == 'R&D' %}selected{% endif %}>R&D</option>
+                        <option value="Sample" {% if request.GET.batch_type == 'Sample' %}selected{% endif %}>Sample</option>
+                        <option value="Return" {% if request.GET.batch_type == 'Return' %}selected{% endif %}>Return</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="expiry_filter" class="form-label">Expiry</label>
+                    <select class="form-select" id="expiry_filter" name="expiry_filter">
+                        <option value="">All</option>
+                        <option value="expired" {% if request.GET.expiry_filter == 'expired' %}selected{% endif %}>Expired</option>
+                        <option value="expiring_soon" {% if request.GET.expiry_filter == 'expiring_soon' %}selected{% endif %}>Expiring Soon</option>
+                        <option value="valid" {% if request.GET.expiry_filter == 'valid' %}selected{% endif %}>Valid</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Batch List -->
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Batch List</h5>
+                <span class="badge bg-primary">{{ batches.count }} batches</span>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if batches %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Batch ID</th>
+                                <th>Item</th>
+                                <th>Supplier</th>
+                                <th>Quantity</th>
+                                <th>Received Date</th>
+                                <th>Expiry Date</th>
+                                <th>QA Status</th>
+                                <th>Storage</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for batch in batches %}
+                            <tr>
+                                <td>
+                                    <strong><code>{{ batch.batch_id }}</code></strong>
+                                    <br>
+                                    <small class="text-muted">
+                                        <span class="badge bg-{% if batch.batch_source == 'External' %}primary{% elif batch.batch_source == 'Internal' %}success{% else %}warning{% endif %}">
+                                            {{ batch.batch_source }}
+                                        </span>
+                                        <span class="badge bg-{% if batch.batch_type == 'Production' %}success{% elif batch.batch_type == 'R&D' %}info{% elif batch.batch_type == 'Sample' %}warning{% else %}secondary{% endif %}">
+                                            {{ batch.batch_type }}
+                                        </span>
+                                    </small>
+                                </td>
+                                <td>
+                                    <a href="{% url 'inventory:item_detail' batch.item_record_id.item_record_id %}">
+                                        {{ batch.item_record_id.item_name }}
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">{{ batch.subtype }}</small>
+                                </td>
+                                <td>
+                                    {% if batch.supplier_code %}
+                                        <a href="{% url 'inventory:supplier_detail' batch.supplier_code.supplier_id %}">
+                                            {{ batch.supplier_code.supplier_name }}
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">Internal</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ batch.quantity_received }} {{ batch.item_record_id.uom }}
+                                </td>
+                                <td>{{ batch.received_date|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if batch.expiry_date %}
+                                        <span class="{% if batch.expiry_date|date:'Y-m-d' <= 'now'|date:'Y-m-d' %}text-danger{% elif batch.expiry_date|date:'Y-m-d' <= 'now'|date:'Y-m-d'|add:'30' %}text-warning{% else %}text-success{% endif %}">
+                                            {{ batch.expiry_date|date:"M d, Y" }}
+                                        </span>
+                                        {% if batch.expiry_date|date:'Y-m-d' <= 'now'|date:'Y-m-d' %}
+                                            <br><span class="badge bg-danger">EXPIRED</span>
+                                        {% elif batch.expiry_date|date:'Y-m-d' <= 'now'|date:'Y-m-d'|add:'30' %}
+                                            <br><span class="badge bg-warning">EXPIRING SOON</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">Not set</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if batch.qa_status == 'Approved' %}success{% elif batch.qa_status == 'Pending' %}warning{% elif batch.qa_status == 'Quarantined' %}danger{% else %}secondary{% endif %}">
+                                        {{ batch.qa_status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if batch.storage_location %}
+                                        {{ batch.storage_location.location_id }}
+                                        <br>
+                                        <small class="text-muted">{{ batch.storage_location.zone_id.zone_name }}</small>
+                                    {% else %}
+                                        <span class="text-muted">Not assigned</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'inventory:batch_detail' batch.batch_id %}" 
+                                           class="btn btn-sm btn-outline-primary" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'inventory:create_transaction' %}?batch_id={{ batch.batch_id }}" 
+                                           class="btn btn-sm btn-outline-success" title="Create Transaction">
+                                            <i class="fas fa-exchange-alt"></i>
+                                        </a>
+                                        <a href="{% url 'inventory:create_qa_review' %}?batch_id={{ batch.batch_id }}" 
+                                           class="btn btn-sm btn-outline-warning" title="Create QA Review">
+                                            <i class="fas fa-clipboard-check"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if batches.has_other_pages %}
+                    <nav aria-label="Batch pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if batches.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ batches.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        Previous
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            {% for num in batches.paginator.page_range %}
+                                {% if batches.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > batches.number|add:'-3' and num < batches.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                            {{ num }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if batches.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ batches.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        Next
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-box fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No batches found</h5>
+                    <p class="text-muted">Try adjusting your search criteria or create a new batch.</p>
+                    <a href="#" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create First Batch
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

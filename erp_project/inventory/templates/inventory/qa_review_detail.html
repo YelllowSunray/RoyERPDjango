@@ -1,0 +1,341 @@
+{% extends 'inventory/base.html' %}
+{% load static %}
+
+{% block title %}QA Review - {{ qa_review.qa_review_id }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">QA Review Details</h1>
+            <p class="text-muted">{{ qa_review.qa_review_id }}</p>
+        </div>
+        <div>
+            <a href="{% url 'inventory:qa_review_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to QA Reviews
+            </a>
+            <a href="#" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit Review
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main QA Review Information -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clipboard-check"></i> Review Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Review ID:</strong></td>
+                                    <td><code>{{ qa_review.qa_review_id }}</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Batch Number:</strong></td>
+                                    <td>
+                                        {% if qa_review.batch_id %}
+                                            <a href="{% url 'inventory:batch_detail' qa_review.batch_id.batch_id %}">
+                                                {{ qa_review.batch_id.batch_id }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">{{ qa_review.batch_number }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Item Code:</strong></td>
+                                    <td>
+                                        {% if qa_review.item_code %}
+                                            <a href="{% url 'inventory:item_detail' qa_review.item_code.item_record_id %}">
+                                                {{ qa_review.item_code.item_name }}
+                                            </a>
+                                            <br><small class="text-muted">{{ qa_review.item_code.item_record_id }}</small>
+                                        {% else %}
+                                            <span class="text-muted">{{ qa_review.item_code_id }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Supplier:</strong></td>
+                                    <td>
+                                        {% if qa_review.supplier_code %}
+                                            <a href="{% url 'inventory:supplier_detail' qa_review.supplier_code.supplier_id %}">
+                                                {{ qa_review.supplier_code.supplier_name }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">{{ qa_review.supplier_code_id }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Reviewer:</strong></td>
+                                    <td>{{ qa_review.qa_reviewer }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Review Date:</strong></td>
+                                    <td>{{ qa_review.review_date|date:"M d, Y" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Review Outcome:</strong></td>
+                                    <td>
+                                        <span class="badge bg-{% if qa_review.review_outcome == 'Approved' %}success{% elif qa_review.review_outcome == 'Conditional' %}warning{% elif qa_review.review_outcome == 'Rejected' %}danger{% else %}secondary{% endif %}">
+                                            {{ qa_review.review_outcome }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Document Match:</strong></td>
+                                    <td>
+                                        <span class="badge bg-{% if qa_review.document_match == 'Yes' %}success{% elif qa_review.document_match == 'Partial' %}warning{% else %}danger{% endif %}">
+                                            {{ qa_review.document_match }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Sub-Ingredient Log:</strong></td>
+                                    <td>
+                                        {% if qa_review.sub_ingredient_log %}
+                                            <span class="text-success">{{ qa_review.sub_ingredient_log }}</span>
+                                        {% else %}
+                                            <span class="text-muted">Not required</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>QA File Link:</strong></td>
+                                    <td>
+                                        {% if qa_review.qa_file_link %}
+                                            <a href="{{ qa_review.qa_file_link }}" target="_blank">
+                                                <i class="fas fa-external-link-alt"></i> View Files
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">No files attached</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Linked Transaction:</strong></td>
+                                    <td>
+                                        {% if qa_review.inventory_transaction_id %}
+                                            <a href="{% url 'inventory:transaction_detail' qa_review.inventory_transaction_id.transaction_id %}">
+                                                {{ qa_review.inventory_transaction_id.transaction_id }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">Not linked</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Document Verification -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-alt"></i> Document Verification
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Document Matches</h6>
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>COA Match</span>
+                                    <span class="badge bg-{% if qa_review.coa_match %}success{% else %}danger{% endif %}">
+                                        {% if qa_review.coa_match %}Yes{% else %}No{% endif %}
+                                    </span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>SDS Match</span>
+                                    <span class="badge bg-{% if qa_review.sds_match %}success{% else %}danger{% endif %}">
+                                        {% if qa_review.sds_match %}Yes{% else %}No{% endif %}
+                                    </span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Spec Match</span>
+                                    <span class="badge bg-{% if qa_review.spec_match %}success{% else %}danger{% endif %}">
+                                        {% if qa_review.spec_match %}Yes{% else %}No{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Document Attachments</h6>
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>COA Attached</span>
+                                    <span class="badge bg-{% if qa_review.coa_attached %}success{% else %}secondary{% endif %}">
+                                        {% if qa_review.coa_attached %}Yes{% else %}No{% endif %}
+                                    </span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>SDS Attached</span>
+                                    <span class="badge bg-{% if qa_review.sds_attached %}success{% else %}secondary{% endif %}">
+                                        {% if qa_review.sds_attached %}Yes{% else %}No{% endif %}
+                                    </span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Label Attached</span>
+                                    <span class="badge bg-{% if qa_review.label_attached %}success{% else %}secondary{% endif %}">
+                                        {% if qa_review.label_attached %}Yes{% else %}No{% endif %}
+                                    </span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>Spec Attached</span>
+                                    <span class="badge bg-{% if qa_review.spec_attached %}success{% else %}secondary{% endif %}">
+                                        {% if qa_review.spec_attached %}Yes{% else %}No{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comments -->
+            {% if qa_review.comments %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-comment"></i> Comments
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ qa_review.comments }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if qa_review.batch_id %}
+                        <a href="{% url 'inventory:batch_detail' qa_review.batch_id.batch_id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-box"></i> View Batch
+                        </a>
+                        {% endif %}
+                        {% if qa_review.inventory_transaction_id %}
+                        <a href="{% url 'inventory:transaction_detail' qa_review.inventory_transaction_id.transaction_id %}" class="btn btn-outline-success">
+                            <i class="fas fa-exchange-alt"></i> View Transaction
+                        </a>
+                        {% endif %}
+                        <button class="btn btn-outline-warning">
+                            <i class="fas fa-print"></i> Print Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Review Statistics -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar"></i> Review Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-{% if qa_review.coa_match %}success{% else %}danger{% endif %}">
+                                {% if qa_review.coa_match %}✓{% else %}✗{% endif %}
+                            </h4>
+                            <small class="text-muted">COA</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-{% if qa_review.sds_match %}success{% else %}danger{% endif %}">
+                                {% if qa_review.sds_match %}✓{% else %}✗{% endif %}
+                            </h4>
+                            <small class="text-muted">SDS</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-{% if qa_review.spec_match %}success{% else %}danger{% endif %}">
+                                {% if qa_review.spec_match %}✓{% else %}✗{% endif %}
+                            </h4>
+                            <small class="text-muted">Spec</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-{% if qa_review.document_match == 'Yes' %}success{% elif qa_review.document_match == 'Partial' %}warning{% else %}danger{% endif %}">
+                                {% if qa_review.document_match == 'Yes' %}✓{% elif qa_review.document_match == 'Partial' %}~{% else %}✗{% endif %}
+                            </h4>
+                            <small class="text-muted">Overall</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-link"></i> Related Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        {% if qa_review.batch_id %}
+                        <li class="mb-2">
+                            <strong>Batch:</strong><br>
+                            <a href="{% url 'inventory:batch_detail' qa_review.batch_id.batch_id %}">
+                                {{ qa_review.batch_id.batch_id }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if qa_review.item_code %}
+                        <li class="mb-2">
+                            <strong>Item:</strong><br>
+                            <a href="{% url 'inventory:item_detail' qa_review.item_code.item_record_id %}">
+                                {{ qa_review.item_code.item_name }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if qa_review.supplier_code %}
+                        <li class="mb-2">
+                            <strong>Supplier:</strong><br>
+                            <a href="{% url 'inventory:supplier_detail' qa_review.supplier_code.supplier_id %}">
+                                {{ qa_review.supplier_code.supplier_name }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if qa_review.inventory_transaction_id %}
+                        <li class="mb-2">
+                            <strong>Transaction:</strong><br>
+                            <a href="{% url 'inventory:transaction_detail' qa_review.inventory_transaction_id.transaction_id %}">
+                                {{ qa_review.inventory_transaction_id.transaction_id }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,334 @@
+{% extends 'inventory/base.html' %}
+{% load static %}
+
+{% block title %}Inventory Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Inventory Report</h1>
+            <p class="text-muted">Comprehensive inventory status and analytics</p>
+        </div>
+        <div>
+            <button class="btn btn-success" onclick="exportToCSV()">
+                <i class="fas fa-download"></i> Export CSV
+            </button>
+            <button class="btn btn-primary" onclick="window.print()">
+                <i class="fas fa-print"></i> Print Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Items
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_items }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-boxes fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Active Batches
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_batches }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-layer-group fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Low Stock Items
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ low_stock_items }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Expiring Soon
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ expiring_soon }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="category" class="form-label">Category</label>
+                    <select class="form-select" id="category" name="category">
+                        <option value="">All Categories</option>
+                        <option value="Chemical" {% if request.GET.category == 'Chemical' %}selected{% endif %}>Chemical</option>
+                        <option value="Biological" {% if request.GET.category == 'Biological' %}selected{% endif %}>Biological</option>
+                        <option value="Equipment" {% if request.GET.category == 'Equipment' %}selected{% endif %}>Equipment</option>
+                        <option value="Packaging" {% if request.GET.category == 'Packaging' %}selected{% endif %}>Packaging</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="qa_status" class="form-label">QA Status</label>
+                    <select class="form-select" id="qa_status" name="qa_status">
+                        <option value="">All Statuses</option>
+                        <option value="Approved" {% if request.GET.qa_status == 'Approved' %}selected{% endif %}>Approved</option>
+                        <option value="Pending" {% if request.GET.qa_status == 'Pending' %}selected{% endif %}>Pending</option>
+                        <option value="Quarantined" {% if request.GET.qa_status == 'Quarantined' %}selected{% endif %}>Quarantined</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="storage_zone" class="form-label">Storage Zone</label>
+                    <select class="form-select" id="storage_zone" name="storage_zone">
+                        <option value="">All Zones</option>
+                        {% for zone in storage_zones %}
+                            <option value="{{ zone.zone_id }}" {% if request.GET.storage_zone == zone.zone_id %}selected{% endif %}>{{ zone.zone_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="stock_level" class="form-label">Stock Level</label>
+                    <select class="form-select" id="stock_level" name="stock_level">
+                        <option value="">All Levels</option>
+                        <option value="low" {% if request.GET.stock_level == 'low' %}selected{% endif %}>Low Stock</option>
+                        <option value="normal" {% if request.GET.stock_level == 'normal' %}selected{% endif %}>Normal Stock</option>
+                        <option value="high" {% if request.GET.stock_level == 'high' %}selected{% endif %}>High Stock</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           value="{{ request.GET.search }}" placeholder="Item name, code...">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Inventory Report Table -->
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Inventory Status Report</h5>
+                <span class="badge bg-primary">{{ inventory_items.count }} items</span>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if inventory_items %}
+                <div class="table-responsive">
+                    <table class="table table-hover" id="inventoryTable">
+                        <thead>
+                            <tr>
+                                <th>Item Code</th>
+                                <th>Item Name</th>
+                                <th>Category</th>
+                                <th>Total Stock</th>
+                                <th>Batches</th>
+                                <th>Storage</th>
+                                <th>QA Status</th>
+                                <th>Expiry Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in inventory_items %}
+                            <tr>
+                                <td>
+                                    <strong><code>{{ item.item_record_id }}</code></strong>
+                                </td>
+                                <td>
+                                    <a href="{% url 'inventory:item_detail' item.item_record_id %}">
+                                        {{ item.item_name }}
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">{{ item.subtype }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{% if item.category == 'Chemical' %}danger{% elif item.category == 'Biological' %}success{% elif item.category == 'Equipment' %}info{% else %}secondary{% endif %}">
+                                        {{ item.category }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <strong>{{ item.total_stock|floatformat:2 }}</strong> {{ item.uom }}
+                                    {% if item.total_stock < 10 %}
+                                        <br><span class="badge bg-warning">Low Stock</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ item.batch_count }} batches
+                                    {% if item.batch_count > 0 %}
+                                        <br><small class="text-muted">{{ item.approved_batches }} approved</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.primary_location %}
+                                        {{ item.primary_location }}
+                                        <br><small class="text-muted">{{ item.primary_zone }}</small>
+                                    {% else %}
+                                        <span class="text-muted">Not assigned</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.qa_required %}
+                                        <span class="badge bg-danger">QA Required</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Not Required</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.expiring_batches > 0 %}
+                                        <span class="badge bg-warning">{{ item.expiring_batches }} expiring</span>
+                                    {% elif item.expired_batches > 0 %}
+                                        <span class="badge bg-danger">{{ item.expired_batches }} expired</span>
+                                    {% else %}
+                                        <span class="badge bg-success">All Valid</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'inventory:item_detail' item.item_record_id %}" 
+                                           class="btn btn-sm btn-outline-primary" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'inventory:batch_list' %}?item_code={{ item.item_record_id }}" 
+                                           class="btn btn-sm btn-outline-success" title="View Batches">
+                                            <i class="fas fa-layer-group"></i>
+                                        </a>
+                                        <a href="{% url 'inventory:transaction_list' %}?item_code={{ item.item_record_id }}" 
+                                           class="btn btn-sm btn-outline-warning" title="View Transactions">
+                                            <i class="fas fa-exchange-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if inventory_items.has_other_pages %}
+                    <nav aria-label="Inventory pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if inventory_items.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ inventory_items.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        Previous
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            {% for num in inventory_items.paginator.page_range %}
+                                {% if inventory_items.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > inventory_items.number|add:'-3' and num < inventory_items.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                            {{ num }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if inventory_items.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ inventory_items.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                        Next
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-boxes fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No inventory items found</h5>
+                    <p class="text-muted">Try adjusting your search criteria.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function exportToCSV() {
+    const table = document.getElementById('inventoryTable');
+    const rows = table.getElementsByTagName('tr');
+    let csv = [];
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const cols = row.querySelectorAll('td, th');
+        let csvRow = [];
+        
+        for (let j = 0; j < cols.length - 1; j++) { // Exclude last column (Actions)
+            let text = cols[j].innerText.replace(/,/g, ';');
+            csvRow.push('"' + text + '"');
+        }
+        
+        csv.push(csvRow.join(','));
+    }
+    
+    const csvContent = csv.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'inventory_report.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+{% endblock %} 

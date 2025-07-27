@@ -1,0 +1,66 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Debug Links{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Debug Links Test</h1>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Test All Links</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'inventory:item_list' %}" class="btn btn-primary btn-lg w-100">
+                                Items List
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'inventory:supplier_list' %}" class="btn btn-success btn-lg w-100">
+                                Suppliers List
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'inventory:customer_list' %}" class="btn btn-info btn-lg w-100">
+                                Customers List
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'inventory:batch_list' %}" class="btn btn-warning btn-lg w-100">
+                                Batches List
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'inventory:transaction_list' %}" class="btn btn-secondary btn-lg w-100">
+                                Transactions List
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'inventory:qa_review_list' %}" class="btn btn-dark btn-lg w-100">
+                                QA Reviews List
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'inventory:inventory_report' %}" class="btn btn-danger btn-lg w-100">
+                                Inventory Report
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'inventory:expiry_report' %}" class="btn btn-light btn-lg w-100">
+                                Expiry Report
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

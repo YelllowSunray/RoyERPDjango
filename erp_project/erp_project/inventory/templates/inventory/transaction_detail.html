@@ -1,0 +1,582 @@
+{% extends 'inventory/base.html' %}
+{% load static %}
+
+{% block title %}Transaction Detail - {{ transaction.transaction_id }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Transaction Details</h1>
+            <p class="text-muted">{{ transaction.transaction_id }}</p>
+        </div>
+        <div>
+            <a href="{% url 'inventory:transaction_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Transactions
+            </a>
+            <a href="#" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Edit Transaction
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Transaction Information -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exchange-alt"></i> Transaction Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Transaction ID:</strong></td>
+                                    <td><code>{{ transaction.transaction_id }}</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Transaction Type:</strong></td>
+                                    <td>
+                                        <span class="badge bg-{% if transaction.transaction_type == 'RCV-PUR' %}success{% elif transaction.transaction_type == 'SHIP-CUS' %}danger{% elif transaction.transaction_type == 'ISS-MFG' %}warning{% else %}secondary{% endif %}">
+                                            {{ transaction.transaction_type }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Transaction Date:</strong></td>
+                                    <td>{{ transaction.transaction_datetime|date:"M d, Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>User:</strong></td>
+                                    <td>{{ transaction.transaction_user }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Item Code:</strong></td>
+                                    <td>
+                                        {% if transaction.item_code %}
+                                            <a href="{% url 'inventory:item_detail' transaction.item_code.item_record_id %}">
+                                                {{ transaction.item_code.item_name }}
+                                            </a>
+                                            <br><small class="text-muted">{{ transaction.item_code.item_record_id }}</small>
+                                        {% else %}
+                                            <span class="text-muted">{{ transaction.item_code_id }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Product Code:</strong></td>
+                                    <td>{{ transaction.product_code|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Product Name:</strong></td>
+                                    <td>{{ transaction.product_name|default:"Not specified" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Quantity:</strong></td>
+                                    <td>{{ transaction.quantity }} {{ transaction.unit }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Batch ID:</strong></td>
+                                    <td>
+                                        {% if transaction.batch_id %}
+                                            <a href="{% url 'inventory:batch_detail' transaction.batch_id.batch_id %}">
+                                                {{ transaction.batch_id.batch_id }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">Not tracked</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Unit ID:</strong></td>
+                                    <td>{{ transaction.unit_id|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>QA Status:</strong></td>
+                                    <td>
+                                        {% if transaction.qa_status %}
+                                            <span class="badge bg-{% if transaction.qa_status == 'Approved' %}success{% elif transaction.qa_status == 'Pending' %}warning{% else %}danger{% endif %}">
+                                                {{ transaction.qa_status }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">Not required</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Storage Zone:</strong></td>
+                                    <td>{{ transaction.storage_zone|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Storage Location:</strong></td>
+                                    <td>{{ transaction.storage_location|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Comments:</strong></td>
+                                    <td>{{ transaction.comments|default:"No comments" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Supplier/Customer Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-building"></i> 
+                        {% if transaction.transaction_type == 'RCV-PUR' %}Supplier Information{% else %}Recipient Information{% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                {% if transaction.transaction_type == 'RCV-PUR' %}
+                                    <tr>
+                                        <td><strong>Supplier Code:</strong></td>
+                                        <td>
+                                            {% if transaction.supplier_code %}
+                                                <a href="{% url 'inventory:supplier_detail' transaction.supplier_code.supplier_id %}">
+                                                    {{ transaction.supplier_code.supplier_name }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">{{ transaction.supplier_code_id }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Supplier Name:</strong></td>
+                                        <td>{{ transaction.supplier_name|default:"Not specified" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Invoice No:</strong></td>
+                                        <td>{{ transaction.invoice_no|default:"Not specified" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Invoice Date:</strong></td>
+                                        <td>
+                                            {% if transaction.invoice_date %}
+                                                {{ transaction.invoice_date|date:"M d, Y" }}
+                                            {% else %}
+                                                <span class="text-muted">Not specified</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td><strong>Recipient Code:</strong></td>
+                                        <td>
+                                            {% if transaction.recipient_code %}
+                                                <a href="{% url 'inventory:customer_detail' transaction.recipient_code.customer_code %}">
+                                                    {{ transaction.recipient_code.customer_name }}
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted">{{ transaction.recipient_code_id }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Recipient Company:</strong></td>
+                                        <td>{{ transaction.recipient_company|default:"Not specified" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Recipient Contact:</strong></td>
+                                        <td>{{ transaction.recipient_contact|default:"Not specified" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Dispatch Method:</strong></td>
+                                        <td>{{ transaction.dispatch_method|default:"Not specified" }}</td>
+                                    </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                {% if transaction.transaction_type == 'RCV-PUR' %}
+                                    <tr>
+                                        <td><strong>COA Provided:</strong></td>
+                                        <td>
+                                            {% if transaction.coa_provided %}
+                                                <span class="badge bg-success">Yes</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">No</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>SDS Provided:</strong></td>
+                                        <td>
+                                            {% if transaction.sds_provided %}
+                                                <span class="badge bg-success">Yes</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">No</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td><strong>Dispatch Address:</strong></td>
+                                        <td>{{ transaction.dispatch_address|default:"Not specified" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Courier Name:</strong></td>
+                                        <td>{{ transaction.courier_name|default:"Not specified" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Tracking Number:</strong></td>
+                                        <td>{{ transaction.tracking_number|default:"Not specified" }}</td>
+                                    </tr>
+                                {% endif %}
+                                <tr>
+                                    <td><strong>Label Applied:</strong></td>
+                                    <td>
+                                        {% if transaction.label_applied %}
+                                            <span class="badge bg-success">Yes</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">No</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dates and Usage Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-calendar"></i> Dates & Usage Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Manufacturing Date:</strong></td>
+                                    <td>
+                                        {% if transaction.mfg_date %}
+                                            {{ transaction.mfg_date|date:"M d, Y" }}
+                                        {% else %}
+                                            <span class="text-muted">Not specified</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Expiry Date:</strong></td>
+                                    <td>
+                                        {% if transaction.expiry_date %}
+                                            <span class="{% if transaction.expiry_date|date:'Y-m-d' <= 'now'|date:'Y-m-d' %}text-danger{% elif transaction.expiry_date|date:'Y-m-d' <= 'now'|date:'Y-m-d'|add:'30' %}text-warning{% else %}text-success{% endif %}">
+                                                {{ transaction.expiry_date|date:"M d, Y" }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">Not specified</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Opened Date:</strong></td>
+                                    <td>
+                                        {% if transaction.opened_date %}
+                                            {{ transaction.opened_date|date:"M d, Y" }}
+                                        {% else %}
+                                            <span class="text-muted">Not opened</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Used In:</strong></td>
+                                    <td>{{ transaction.used_in|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Used By:</strong></td>
+                                    <td>{{ transaction.used_by|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Used Date:</strong></td>
+                                    <td>
+                                        {% if transaction.used_date %}
+                                            {{ transaction.used_date|date:"M d, Y" }}
+                                        {% else %}
+                                            <span class="text-muted">Not specified</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Finished Date:</strong></td>
+                                    <td>
+                                        {% if transaction.finished_date %}
+                                            {{ transaction.finished_date|date:"M d, Y" }}
+                                        {% else %}
+                                            <span class="text-muted">Not specified</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Disposal Information (if applicable) -->
+            {% if transaction.disposed_date or transaction.disposed_by or transaction.disposed_as %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-trash"></i> Disposal Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Disposed Date:</strong></td>
+                                    <td>
+                                        {% if transaction.disposed_date %}
+                                            {{ transaction.disposed_date|date:"M d, Y" }}
+                                        {% else %}
+                                            <span class="text-muted">Not specified</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Disposed By:</strong></td>
+                                    <td>{{ transaction.disposed_by|default:"Not specified" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Disposed As:</strong></td>
+                                    <td>{{ transaction.disposed_as|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Disposal Comments:</strong></td>
+                                    <td>{{ transaction.disposal_comments|default:"No comments" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Equipment Information (if applicable) -->
+            {% if transaction.serial_number or transaction.maintenance_due_date or transaction.calibration_date %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cogs"></i> Equipment Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Serial Number:</strong></td>
+                                    <td>{{ transaction.serial_number|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Maintenance Due Date:</strong></td>
+                                    <td>
+                                        {% if transaction.maintenance_due_date %}
+                                            {{ transaction.maintenance_due_date|date:"M d, Y" }}
+                                        {% else %}
+                                            <span class="text-muted">Not specified</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Calibration Date:</strong></td>
+                                    <td>
+                                        {% if transaction.calibration_date %}
+                                            {{ transaction.calibration_date|date:"M d, Y" }}
+                                        {% else %}
+                                            <span class="text-muted">Not specified</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Condition:</strong></td>
+                                    <td>{{ transaction.condition|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Physical Location:</strong></td>
+                                    <td>{{ transaction.physical_location|default:"Not specified" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if transaction.batch_id %}
+                        <a href="{% url 'inventory:batch_detail' transaction.batch_id.batch_id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-box"></i> View Batch
+                        </a>
+                        {% endif %}
+                        {% if transaction.item_code %}
+                        <a href="{% url 'inventory:item_detail' transaction.item_code.item_record_id %}" class="btn btn-outline-success">
+                            <i class="fas fa-tag"></i> View Item
+                        </a>
+                        {% endif %}
+                        <button class="btn btn-outline-warning">
+                            <i class="fas fa-print"></i> Print Transaction
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QA Review Information -->
+            {% if transaction.qa_review_id %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clipboard-check"></i> QA Review
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Review ID:</strong><br>
+                        <a href="{% url 'inventory:qa_review_detail' transaction.qa_review_id.qa_review_id %}">
+                            {{ transaction.qa_review_id.qa_review_id }}
+                        </a>
+                    </p>
+                    <p><strong>Outcome:</strong><br>
+                        <span class="badge bg-{% if transaction.qa_review_id.review_outcome == 'Approved' %}success{% elif transaction.qa_review_id.review_outcome == 'Conditional' %}warning{% else %}danger{% endif %}">
+                            {{ transaction.qa_review_id.review_outcome }}
+                        </span>
+                    </p>
+                    <p><strong>Reviewer:</strong><br>
+                        {{ transaction.qa_review_id.qa_reviewer }}
+                    </p>
+                    <p><strong>Date:</strong><br>
+                        {{ transaction.qa_review_id.review_date|date:"M d, Y" }}
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Document Verification -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-alt"></i> Document Verification
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-{% if transaction.coa_match %}success{% else %}danger{% endif %}">
+                                {% if transaction.coa_match %}✓{% else %}✗{% endif %}
+                            </h4>
+                            <small class="text-muted">COA Match</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-{% if transaction.sds_match %}success{% else %}danger{% endif %}">
+                                {% if transaction.sds_match %}✓{% else %}✗{% endif %}
+                            </h4>
+                            <small class="text-muted">SDS Match</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-{% if transaction.spec_match %}success{% else %}danger{% endif %}">
+                                {% if transaction.spec_match %}✓{% else %}✗{% endif %}
+                            </h4>
+                            <small class="text-muted">Spec Match</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-{% if transaction.label_applied %}success{% else %}secondary{% endif %}">
+                                {% if transaction.label_applied %}✓{% else %}✗{% endif %}
+                            </h4>
+                            <small class="text-muted">Label Applied</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-link"></i> Related Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        {% if transaction.item_code %}
+                        <li class="mb-2">
+                            <strong>Item:</strong><br>
+                            <a href="{% url 'inventory:item_detail' transaction.item_code.item_record_id %}">
+                                {{ transaction.item_code.item_name }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if transaction.batch_id %}
+                        <li class="mb-2">
+                            <strong>Batch:</strong><br>
+                            <a href="{% url 'inventory:batch_detail' transaction.batch_id.batch_id %}">
+                                {{ transaction.batch_id.batch_id }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if transaction.supplier_code %}
+                        <li class="mb-2">
+                            <strong>Supplier:</strong><br>
+                            <a href="{% url 'inventory:supplier_detail' transaction.supplier_code.supplier_id %}">
+                                {{ transaction.supplier_code.supplier_name }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if transaction.recipient_code %}
+                        <li class="mb-2">
+                            <strong>Recipient:</strong><br>
+                            <a href="{% url 'inventory:customer_detail' transaction.recipient_code.customer_code %}">
+                                {{ transaction.recipient_code.customer_name }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

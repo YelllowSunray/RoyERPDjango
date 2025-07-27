@@ -1,0 +1,331 @@
+{% extends 'inventory/base.html' %}
+
+{% block title %}Supplier Detail - {{ supplier.supplier_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-truck text-primary"></i>
+                    {{ supplier.supplier_name }}
+                </h1>
+                <div>
+                    <a href="{% url 'inventory:supplier_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Suppliers
+                    </a>
+                    <a href="#" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit Supplier
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Basic Information -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle text-info"></i>
+                        Basic Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Supplier ID:</strong></td>
+                            <td><span class="badge bg-primary">{{ supplier.supplier_id }}</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Business Unit:</strong></td>
+                            <td>{{ supplier.business_unit|default:"Not specified" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Country of Origin:</strong></td>
+                            <td>{{ supplier.country_of_origin }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Approval Status:</strong></td>
+                            <td>
+                                {% if supplier.approved %}
+                                    <span class="badge bg-success">Approved</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Pending</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Approved On:</strong></td>
+                            <td>{{ supplier.approved_on|default:"Not approved" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact & Review Information -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-calendar-alt text-warning"></i>
+                        Review & Contact Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Last Reviewed:</strong></td>
+                            <td>{{ supplier.last_reviewed_on|default:"Never reviewed" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Review Frequency:</strong></td>
+                            <td>{{ supplier.review_frequency }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Address:</strong></td>
+                            <td>{{ supplier.address|linebreaks }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Certifications:</strong></td>
+                            <td>{{ supplier.certifications|default:"None specified" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Related Data -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-link text-primary"></i>
+                        Related Data
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="text-center">
+                                <h4 class="text-primary">{{ supplier_products_count }}</h4>
+                                <p class="text-muted">Products</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <h4 class="text-success">{{ transactions_count }}</h4>
+                                <p class="text-muted">Transactions</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-6">
+                            <div class="text-center">
+                                <h4 class="text-warning">{{ batches_count }}</h4>
+                                <p class="text-muted">Batches</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <h4 class="text-info">{{ qa_reviews_count }}</h4>
+                                <p class="text-muted">QA Reviews</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-sticky-note text-success"></i>
+                        Notes
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if supplier.notes %}
+                        <p>{{ supplier.notes|linebreaks }}</p>
+                    {% else %}
+                        <p class="text-muted">No notes available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supplier Products -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-boxes text-info"></i>
+                        Supplier Products
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if supplier_products %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Item Code</th>
+                                        <th>Item Name</th>
+                                        <th>Product Code</th>
+                                        <th>Grade</th>
+                                        <th>Approval Status</th>
+                                        <th>Last Reviewed</th>
+                                        <th>Next Review Due</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for sp in supplier_products %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'inventory:item_detail' sp.item_code.item_record_id %}" class="text-decoration-none">
+                                                {{ sp.item_code.item_record_id }}
+                                            </a>
+                                        </td>
+                                        <td>{{ sp.item_code.item_name }}</td>
+                                        <td>{{ sp.product_code|default:"-" }}</td>
+                                        <td>
+                                            {% if sp.grade %}
+                                                <span class="badge bg-warning">{{ sp.grade }}</span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if sp.approved %}
+                                                <span class="badge bg-success">Approved</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Pending</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ sp.last_reviewed_on|default:"Never" }}</td>
+                                        <td>
+                                            {% if sp.next_review_due %}
+                                                <span class="{% if sp.next_review_due < today %}text-danger{% elif sp.next_review_due < today_plus_30 %}text-warning{% else %}text-success{% endif %}">
+                                                    {{ sp.next_review_due }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="#" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No products found for this supplier.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exchange-alt text-success"></i>
+                        Recent Transactions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if transactions %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Transaction ID</th>
+                                        <th>Item</th>
+                                        <th>Type</th>
+                                        <th>Quantity</th>
+                                        <th>Date/Time</th>
+                                        <th>QA Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transaction in transactions %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'inventory:transaction_detail' transaction.transaction_id %}" class="text-decoration-none">
+                                                {{ transaction.transaction_id }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'inventory:item_detail' transaction.item_code.item_record_id %}" class="text-decoration-none">
+                                                {{ transaction.item_code.item_name }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ transaction.transaction_type }}</span>
+                                        </td>
+                                        <td>
+                                            {% if transaction.quantity > 0 %}
+                                                <span class="text-success">+{{ transaction.quantity }} {{ transaction.unit }}</span>
+                                            {% else %}
+                                                <span class="text-danger">{{ transaction.quantity }} {{ transaction.unit }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ transaction.transaction_datetime|date:"M d, Y H:i" }}</td>
+                                        <td>
+                                            {% if transaction.qa_status %}
+                                                {% if transaction.qa_status == 'Approved' %}
+                                                    <span class="badge bg-success">{{ transaction.qa_status }}</span>
+                                                {% elif transaction.qa_status == 'Pending' %}
+                                                    <span class="badge bg-warning">{{ transaction.qa_status }}</span>
+                                                {% elif transaction.qa_status == 'Quarantined' %}
+                                                    <span class="badge bg-danger">{{ transaction.qa_status }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ transaction.qa_status }}</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'inventory:transaction_detail' transaction.transaction_id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No transactions found for this supplier.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
